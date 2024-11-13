@@ -51,6 +51,10 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
           _telefonoController.text = u.telefono;
           _horariosController.text = u.horario ?? '';
           _passwordController.text = u.password;
+          _nom=_nombreController.text;
+          _telefono=_telefonoController.text;
+          _horarios=_horariosController.text;
+          _password=_passwordController.text;
         });
       } else {
         Navigator.pushNamed(context, 'welcome');
