@@ -1,7 +1,8 @@
 class Tutoria {
-  final int? id;
-  final int idAlumno;
-  final int idProfesor;
+  final String? id;
+  final String idAlumno;
+  final String idProfesor;
+  final String idMateria;
   final DateTime dia;
   final String descripcion;
   bool confirmada = false;
@@ -15,6 +16,7 @@ class Tutoria {
     this.id,
     required this.idAlumno,
     required this.idProfesor,
+    required this.idMateria,
     required this.dia,
     required this.descripcion,
     this.confirmada=false,
@@ -30,14 +32,15 @@ class Tutoria {
       'id': id,
       'idAlumno': idAlumno,
       'idProfesor': idProfesor,
+      'idMateria': idMateria,
       'dia': dia.toIso8601String(),
       'descripcion': descripcion,
       'confirmada': confirmada ? 1 : 0,
-      'devolucion': devolucion,
-      'calificacionalumno': calificacionalumno,
-      'calificacionProfesor': calificacionProfesor,
-      'tareasAsignadas': tareasAsignadas,
-      'notasSeguimiento': notasSeguimiento,
+      if(devolucion!=null)'devolucion': devolucion,
+      if(calificacionalumno!=null)'calificacionalumno': calificacionalumno,
+      if(calificacionProfesor!=null)'calificacionProfesor': calificacionProfesor,
+      if(tareasAsignadas!=null)'tareasAsignadas': tareasAsignadas,
+      if(notasSeguimiento!=null)'notasSeguimiento': notasSeguimiento,
     };
   }
 
@@ -46,6 +49,7 @@ class Tutoria {
       id: map['id'],
       idAlumno: map['idAlumno'],
       idProfesor: map['idProfesor'],
+      idMateria: map['idMateria'],
       dia: DateTime.parse(map['dia']),
       descripcion: map['descripcion'],
       confirmada: map['confirmada'] == 1,

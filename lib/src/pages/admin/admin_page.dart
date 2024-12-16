@@ -1,33 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/utils/responsive.dart'; // Importar el archivo responsive.dart
+import 'package:mentorme/src/utils/responsive.dart'; 
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Instanciar Responsive para obtener medidas del dispositivo
     final Responsive responsive = Responsive.of(context);
 
     return Scaffold(
-      body: Center( // Utilizar Center para centrar el contenido
+      body: Center( 
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: responsive.wp(5), // Márgenes horizontales responsivos
-            vertical: responsive.hp(3),   // Márgenes verticales responsivos
+            horizontal: responsive.wp(5), 
+            vertical: responsive.hp(3),   
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Centramos los elementos verticalmente
-            crossAxisAlignment: CrossAxisAlignment.center, // Centramos los elementos horizontalmente
+            mainAxisAlignment: MainAxisAlignment.center, 
+            crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
               Text(
                 'Bienvenido, Admin!',
                 style: TextStyle(
-                  fontSize: responsive.dp(2.4), // Tamaño de texto responsivo
+                  fontSize: responsive.dp(2.4), 
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: responsive.hp(4)), // Espaciado responsivo
+              SizedBox(height: responsive.hp(4)), 
 
               ElevatedButton(
                 onPressed: () {
@@ -35,17 +34,17 @@ class AdminPage extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(
-                    horizontal: responsive.wp(10), // Ancho del botón responsivo
-                    vertical: responsive.hp(2),    // Altura del botón responsivo
+                    horizontal: responsive.wp(10),
+                    vertical: responsive.hp(2),   
                   ),
                   textStyle: TextStyle(
-                    fontSize: responsive.dp(1.8), // Tamaño de texto responsivo
+                    fontSize: responsive.dp(1.8),
                   ),
-                  backgroundColor: Colors.orange, // Color de fondo del botón
+                  backgroundColor: Colors.orange, 
                 ),
                 child: const Text('Crear Materia'),
               ),
-              SizedBox(height: responsive.hp(2)), // Espaciado responsivo
+              SizedBox(height: responsive.hp(2)), 
 
               ElevatedButton(
                 onPressed: () {

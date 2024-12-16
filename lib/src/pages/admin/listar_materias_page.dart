@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart'; // Importar el archivo responsive.dart
 import '../../models/materia.dart';
 import 'modificar_materia_page.dart';
@@ -13,12 +13,11 @@ class ListarMateriasPage extends StatefulWidget {
 
 class _ListarMateriasPageState extends State<ListarMateriasPage> {
   Future<List<Materia>> _getMaterias() async {
-    return await MentorMeDatabase.instance.getAllMaterias();
+    return await FirebaseServices.instance.getAllMateriasFB();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Instanciar Responsive para obtener medidas del dispositivo
     final Responsive responsive = Responsive.of(context);
 
     return Scaffold(
@@ -27,8 +26,8 @@ class _ListarMateriasPageState extends State<ListarMateriasPage> {
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: responsive.wp(5), // Márgenes horizontales responsivos
-          vertical: responsive.hp(2),  // Márgenes verticales responsivos
+          horizontal: responsive.wp(5), 
+          vertical: responsive.hp(2),  
         ),
         child: FutureBuilder<List<Materia>>(
           future: _getMaterias(),
@@ -46,9 +45,9 @@ class _ListarMateriasPageState extends State<ListarMateriasPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 4, // Sombra para las tarjetas
+                    elevation: 4, 
                     margin: EdgeInsets.symmetric(
-                      vertical: responsive.hp(1), // Espaciado vertical responsivo
+                      vertical: responsive.hp(1),
                     ),
                     child: ListTile(
                       contentPadding: EdgeInsets.symmetric(
@@ -58,7 +57,7 @@ class _ListarMateriasPageState extends State<ListarMateriasPage> {
                       title: Text(
                         materias[index].nombre,
                         style: TextStyle(
-                          fontSize: responsive.dp(1.8), // Tamaño responsivo
+                          fontSize: responsive.dp(1.8),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -81,12 +80,11 @@ class _ListarMateriasPageState extends State<ListarMateriasPage> {
           Navigator.pushReplacementNamed(context,'crearMateria');
         },
         backgroundColor: Colors.orange,
-        child: const Icon(Icons.add), // Color del botón
+        child: const Icon(Icons.add), 
       ),
     );
   }
 
-  // Método para redirigir a la página de Modificar Materia
   void _navegarAModificarMateria(BuildContext context, Materia materia) async {
     bool result=await Navigator.push(
       context,

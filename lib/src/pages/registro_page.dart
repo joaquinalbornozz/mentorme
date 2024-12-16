@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Para formatear fechas.
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 import '../models/materia.dart';
 import '../models/user.dart';
 import '../database/database.dart';
@@ -18,7 +19,7 @@ class _RegistroPageState extends State<RegistroPage> {
   String _email = '';
   DateTime _fechan=DateTime(1000);
   String _telefono = '';
-  Materia? _materiaSeleccionada;
+  List<String?> _materiaSeleccionada=[];
   String _rolSeleccionado = 'Sin rol';
   String _horarios = '';
   String _password = '';
@@ -114,7 +115,7 @@ class _RegistroPageState extends State<RegistroPage> {
               _rolDropdown(),
               const SizedBox(height: 20),
               _rolSeleccionado == 'Profesor'
-                  ? _materiaDropdown()
+                  ? _materiasMultiSelect()
                   : const SizedBox(height: 1),
               const SizedBox(height: 20),
               _rolSeleccionado == 'Profesor'
@@ -328,33 +329,30 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
-  Widget _materiaDropdown() {
-    return Row(
-      children: [
-        const Icon(Icons.book, color: Color(0xFF10B981)),
-        const SizedBox(width: 16.0),
-        Expanded(
-          child: DropdownButton<Materia>(
-            value: _materiaSeleccionada,
-            items: materias.map<DropdownMenuItem<Materia>>((Materia materia) {
-              return DropdownMenuItem<Materia>(
-                value: materia,
-                child: Text(materia.nombre),
-              );
-            }).toList(),
-            onChanged: (Materia? newValue) {
-              setState(() {
-                _materiaSeleccionada = newValue;
-              });
-            },
-            isExpanded: true,
-            underline: Container(
-              height: 2,
-              color: const Color(0xFFD97706),
-            ),
-          ),
+  Widget _materiasMultiSelect() {
+    return MultiSelectDialogField<String?>(
+      items: materias.map((materia) {
+        return MultiSelectItem<String?>(
+            materia.id, materia.nombre); // `nombre` es un campo de la clase Materia
+      }).toList(),
+      title: const Text("Seleccionar Materias"),
+      selectedColor: const Color(0xFF1E3A8A), 
+      buttonText: const Text(
+        "Materias",
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
         ),
-      ],
+      ),
+      onConfirm: (values) {
+        setState(() {
+          _materiaSeleccionada = values.cast<String?>();
+        });
+      },
+      chipDisplay: MultiSelectChipDisplay(
+        chipColor: const Color(0xFF60A5FA), // Celeste Claro
+        textStyle: const TextStyle(color: Colors.white),
+      ),
     );
   }
 
@@ -420,7 +418,7 @@ class _RegistroPageState extends State<RegistroPage> {
                 Text('Por favor, completa todos los campos obligatorios.')),
       );
     } else if (_rolSeleccionado == 'Profesor' &&
-        (_materiaSeleccionada == null || _horarios.isEmpty)) {
+        (_materiaSeleccionada.isEmpty || _horarios.isEmpty)) {
       // el profesor no completó materia y horarios
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -446,7 +444,10 @@ class _RegistroPageState extends State<RegistroPage> {
     await prefs.setString('nombre', _nom);  // Si quieres guardar más datos, lo puedes hacer aquí
     await prefs.setInt('userid', id);
   }
-
+  List<String>? idmaterias(List<String?> mat){
+    List<String>? L= mat.nonNulls.toList();
+    return L;
+  }
   void _showConfirmationDialog(BuildContext context){
     showDialog(
       context: context,
@@ -470,9 +471,9 @@ class _RegistroPageState extends State<RegistroPage> {
                   fechanacimiento: _fechan,
                   telefono: _telefono,
                   rol: _rolSeleccionado,
-                  idMateria: _rolSeleccionado == 'Profesor' ? _materiaSeleccionada?.id : null,
+                  idMateria: _rolSeleccionado == 'Profesor' ? idmaterias(_materiaSeleccionada) : null,
                   horario: _rolSeleccionado == 'Profesor' ? _horarios : null,
-                  password: _password, // En un caso real, deberías encriptar la contraseña
+                  password: _password, 
                 );
 
                 // Guardar en la base de datos

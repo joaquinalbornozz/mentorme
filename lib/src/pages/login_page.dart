@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
+//import 'package:mentorme/src/database/database.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '/src/utils/responsive.dart';
@@ -137,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<bool> _verificarCredenciales(String email, String password) async {
-    final User? resultado = await MentorMeDatabase.instance.getUserLogin(email, password);
+    final User? resultado = await FirebaseServices.instance.getUserLogin(email,password);// await MentorMeDatabase.instance.getUserLogin(email, password);
     
     if(resultado==null){
       return false;
@@ -154,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.setString('email', user.email);
     await prefs.setString('rol', user.rol);
     await prefs.setString('nombre', user.nombre);
-    await prefs.setInt('userid', user.id?? -1);   
+    await prefs.setString('userid', user.id?? "");   
   }
 
   Widget _loginButton(Responsive responsive, BuildContext context) {
@@ -165,10 +166,8 @@ class _LoginPageState extends State<LoginPage> {
             bool esValido = await _verificarCredenciales(_email, _password);
             
             if (esValido) {
-              // Si las credenciales son válidas, navegar a la página principal
-              Navigator.pushReplacementNamed(context, 'home'); // Cambia '/home' a tu ruta deseada
+              Navigator.pushReplacementNamed(context, 'home'); 
             } else {
-              // Si las credenciales no son válidas, muestra un mensaje de error
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Credenciales incorrectas'))
               );

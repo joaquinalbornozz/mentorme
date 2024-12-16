@@ -1,13 +1,15 @@
 class User {
-  final int? id;
+  final String? id;
   final String email;
   final String password;
   final String nombre;
   final DateTime fechanacimiento;
   final String telefono;
   final String rol;
-  final int? idMateria;
+  final List<String>? idMateria;
   final String? horario;
+  final String? descripcion;
+  final String? fotoperfil;
 
   User(
       {this.id,
@@ -18,19 +20,23 @@ class User {
       required this.telefono,
       required this.rol,
       this.idMateria,
-      this.horario});
+      this.horario,
+      this.descripcion,
+      this.fotoperfil});
 
   Map<String,dynamic> toMap(){
     return{
-      'id': id,
+      //'id': id,
       'email': email,
       'password': password,
       'nombre': nombre,
       'fechanacimiento': fechanacimiento.toIso8601String(),
       'telefono': telefono,
       'rol':rol,
-      'idMateria': idMateria,
-      'horario': horario,
+      if(idMateria!=null)'idMateria': idMateria,
+      if(horario!=null)'horario': horario,
+      if(descripcion!=null)'descripcion': descripcion,
+      if(fotoperfil!=null)'fotoperfil': fotoperfil,
     };
   }
 
@@ -43,8 +49,10 @@ class User {
       fechanacimiento: DateTime.parse(map['fechanacimiento']),
       telefono: map['telefono'],
       rol: map['rol'],
-      idMateria: map['idMateria'],
-      horario: map['horario']
+      idMateria: List.from(map['idMateria']),
+      horario: map['horario'],
+      descripcion: map['descripcion'],
+      fotoperfil: map['fotoperfil'],
     );
   }
 }

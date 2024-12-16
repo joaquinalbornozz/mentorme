@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
-import 'package:mentorme/src/utils/responsive.dart'; // Importar el archivo responsive.dart
+import 'package:mentorme/src/services/firebase_services.dart';
+import 'package:mentorme/src/utils/responsive.dart'; 
 
 import '../../models/materia.dart';
 
@@ -16,27 +16,26 @@ class _CrearMateriaPageState extends State<CrearMateriaPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Instanciar Responsive para obtener medidas del dispositivo
     final Responsive responsive = Responsive.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Crear Materia'),
       ),
-      body: Center( // Utilizar Center para centrar el contenido
+      body: Center( 
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: responsive.wp(5), // Márgenes horizontales responsivos
-            vertical: responsive.hp(3),   // Márgenes verticales responsivos
+            horizontal: responsive.wp(5), 
+            vertical: responsive.hp(3),   
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Centramos verticalmente
-            crossAxisAlignment: CrossAxisAlignment.center, // Centramos horizontalmente
+            mainAxisAlignment: MainAxisAlignment.center, 
+            crossAxisAlignment: CrossAxisAlignment.center, 
             children: [
               Text(
                 'Crea una nueva Materia',
                 style: TextStyle(
-                  fontSize: responsive.dp(2.4), // Tamaño de texto responsivo
+                  fontSize: responsive.dp(2.4), 
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -47,16 +46,15 @@ class _CrearMateriaPageState extends State<CrearMateriaPage> {
                   labelText: 'Nombre de la Materia',
                   border: const OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
-                    horizontal: responsive.wp(3), // Padding interno responsivo
+                    horizontal: responsive.wp(3), 
                     vertical: responsive.hp(2),
                   ),
                 ),
               ),
-              SizedBox(height: responsive.hp(4)), // Espaciado responsivo
+              SizedBox(height: responsive.hp(4)), 
 
               ElevatedButton(
                 onPressed: () {
-                  // Validar que el nombre no esté vacío
                   if (_nombreController.text.isNotEmpty) {
                     _crearMateria(_nombreController.text);
                   } else {
@@ -67,13 +65,13 @@ class _CrearMateriaPageState extends State<CrearMateriaPage> {
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(
-                    horizontal: responsive.wp(10), // Ancho del botón responsivo
-                    vertical: responsive.hp(2),    // Altura del botón responsivo
+                    horizontal: responsive.wp(10), 
+                    vertical: responsive.hp(2),   
                   ),
                   textStyle: TextStyle(
-                    fontSize: responsive.dp(1.8), // Tamaño de texto responsivo
+                    fontSize: responsive.dp(1.8),
                   ),
-                  backgroundColor: Colors.orange, // Color de fondo del botón
+                  backgroundColor: Colors.orange, 
                 ),
                 child: const Text('Guardar Materia'),
               ),
@@ -84,10 +82,9 @@ class _CrearMateriaPageState extends State<CrearMateriaPage> {
     );
   }
 
-  // Método para crear una nueva materia (aquí se debería hacer la inserción en la BD)
   Future<void> _crearMateria(String nombre) async {
     Materia mat = Materia(nombre: nombre);
-    await MentorMeDatabase.instance.insertMateria(mat);
+    await FirebaseServices.instance.insertarMateria(mat);
     Navigator.pop(context);
   }
 }

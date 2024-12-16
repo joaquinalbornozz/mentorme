@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 
 import '../../models/materia.dart';
 
@@ -19,13 +19,11 @@ class _ModificarMateriaPageState extends State<ModificarMateriaPage> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos el controlador con el nombre actual de la materia
     _nombreController = TextEditingController(text: widget.materia.nombre);
   }
 
   @override
   void dispose() {
-    // Liberar el controlador cuando ya no se necesite
     _nombreController.dispose();
     super.dispose();
   }
@@ -62,11 +60,10 @@ class _ModificarMateriaPageState extends State<ModificarMateriaPage> {
     );
   }
 
-  // Método para modificar la materia
   Future<void> _modificarMateria(BuildContext context) async {
     if (_nombreController.text.isNotEmpty) {
       Materia materia= Materia(id:widget.materia.id,nombre:_nombreController.text);
-      await MentorMeDatabase.instance.updateMateria(materia);
+      await FirebaseServices.instance.updateMateria(materia);
       Navigator.pop(context,true);
     } else {
       // Si el nombre está vacío, mostrar un mensaje de error

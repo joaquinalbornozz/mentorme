@@ -1,12 +1,12 @@
 class Materia {
-  final int? id;
+  final String? id;
   final String nombre;
 
   Materia({this.id, required this.nombre});
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      if(id!=null) 'id': id,
       'nombre': nombre,
     };
   }
