@@ -1,11 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/user.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 class ModificarPerfilPage extends StatefulWidget {
   const ModificarPerfilPage({super.key});
 
@@ -20,14 +25,20 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
   String _horarios = '';
   String _password = '';
   String _confirmPassword = '';
-  
+  String _descripcion = '';
+  String _urlfoto = '';
+
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _telefonoController = TextEditingController();
   final TextEditingController _horariosController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _descripcionController = TextEditingController();
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
   User? user;
 
   @override
@@ -37,24 +48,29 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
   }
 
   Future<void> _loadUserData() async {
-    final db = MentorMeDatabase.instance;
+    final db = FirebaseServices.instance;
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('userid');
-    
+    final userId = prefs.getString('userid');
+
     if (userId != null) {
-      final u = await db.getUserbyId(userId);
+      final u = await db.getUserById(userId);
       if (u != null) {
         setState(() {
           user = u;
           _nombreController.text = u.nombre;
-          _fechaController.text = DateFormat('yyyy-MM-dd').format(u.fechanacimiento);
+          _fechaController.text =
+              DateFormat('yyyy-MM-dd').format(u.fechanacimiento);
           _telefonoController.text = u.telefono;
           _horariosController.text = u.horario ?? '';
           _passwordController.text = u.password;
-          _nom=_nombreController.text;
-          _telefono=_telefonoController.text;
-          _horarios=_horariosController.text;
-          _password=_passwordController.text;
+          _descripcionController.text = u.descripcion!;
+          _nom = _nombreController.text;
+          _telefono = _telefonoController.text;
+          _horarios = _horariosController.text;
+          _password = _passwordController.text;
+          _descripcion = _descripcionController.text;
+          if (u.fotoperfil != null || u.fotoperfil!.isNotEmpty)
+            _urlfoto = u.fotoperfil!;
         });
       } else {
         Navigator.pushNamed(context, 'welcome');
@@ -63,12 +79,14 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
       Navigator.pushNamed(context, 'welcome');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final Responsive responsive = Responsive.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editar Perfil', style: TextStyle(color: Colors.amber[800])),
+        title:
+            Text('Editar Perfil', style: TextStyle(color: Colors.amber[800])),
       ),
       body: Stack(
         children: [
@@ -110,11 +128,23 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    SizedBox(height: responsive.hp(3)),
+                    _fotoperfil(),
+                    Text(
+                      'Modifica tu foto de perfil en caso que lo desees',
+                      style: TextStyle(
+                        fontSize: responsive.dp(1),
+                        color: const Color(0xFF4B5563),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
               SizedBox(height: responsive.hp(3)),
               _nombreInput(),
+              const SizedBox(height: 20),
+              __descripcion(),
               const SizedBox(height: 20),
               _fechaNacimientoInput(context),
               const SizedBox(height: 20),
@@ -128,14 +158,13 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
                   ? _horariosInput()
                   : const SizedBox(height: 1),
               const SizedBox(height: 40),
-              _buildRegisterButton(context), 
+              _buildRegisterButton(context),
             ],
           ),
         ],
       ),
     );
   }
-
 
   Widget _passwordInput() {
     return TextField(
@@ -235,8 +264,7 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     if (calendario != null) {
       setState(() {
         _fechan = calendario; // Formatear la fecha correctamente
-        _fechaController.text = DateFormat('yyyy-MM-dd')
-            .format(calendario);
+        _fechaController.text = DateFormat('yyyy-MM-dd').format(calendario);
       });
     }
   }
@@ -296,6 +324,86 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     );
   }
 
+  Widget _fotoperfil() {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) => _buildImagePickerOptions(),
+        );
+      },
+      child: CircleAvatar(
+        radius: 60,
+        backgroundColor: Colors.grey[200],
+        backgroundImage: _selectedImage != null
+            ? FileImage(_selectedImage!)
+            : _urlfoto.isNotEmpty
+                ? NetworkImage(_urlfoto)
+                : null,
+        child: _selectedImage == null
+            ? const Icon(
+                Icons.camera_alt,
+                size: 40,
+                color: Colors.grey,
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildImagePickerOptions() {
+    return SafeArea(
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Seleccionar de la galería'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('Tomar una foto'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Widget __descripcion() {
+    return TextField(
+      controller: _descripcionController,
+      maxLines: 6,
+      decoration: const InputDecoration(
+        labelText: 'Descripción',
+        hintText:
+            'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
+        border: OutlineInputBorder(),
+        alignLabelWithHint: true,
+      ),
+      onChanged: (valor) {
+        setState(() {
+          _descripcion = valor;
+        });
+      },
+    );
+  }
+
   Widget _buildRegisterButton(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -313,26 +421,97 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     );
   }
 
-  // Validación antes de mostrar el modal
+  String extractPublicId(String imageUrl) {
+    final regex = RegExp(r'upload\/(?:v\d+\/)?(.+)\.\w+$');
+    final match = regex.firstMatch(imageUrl);
+    return match != null ? match.group(1)! : '';
+  }
+
+  Future<bool> deleteImg() async {
+    const cloudName = '';
+    const apiKey = '';
+    const apiSecret = '';
+
+    final publicId = extractPublicId(_urlfoto);
+    if (publicId.isEmpty) {
+      print('Error: No se pudo extraer el public_id de la URL');
+      return false;
+    }
+
+    final url =
+        Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/destroy');
+
+    final payload = {
+      'public_id': publicId,
+    };
+
+    final auth = base64Encode(utf8.encode('$apiKey:$apiSecret'));
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Basic $auth',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['result'] == 'ok';
+      } else {
+        print('Error al eliminar la imagen: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Excepción al eliminar la imagen: $e');
+      return false;
+    }
+  }
+
+  Future<void> uploadimg() async {
+    if(_urlfoto.isNotEmpty){
+      if (await deleteImg()==false){
+        print("Error al eliminar la imagen");
+        return;
+      } 
+    }
+    var request = http.MultipartRequest('POST',
+        Uri.parse('https://api.cloudinary.com/v1_1/dci0bezbf/image/upload'))
+      ..fields['upload_preset'] = 'xurkaexw'
+      ..files
+          .add(await http.MultipartFile.fromPath('file', _selectedImage!.path));
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = await response.stream.toBytes();
+      final responseString = String.fromCharCodes(responseData);
+      final jsonmap = jsonDecode(responseString);
+      setState(() {
+        _urlfoto = jsonmap['url'];
+      });
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
+
   void _validateAndShowConfirmationDialog(BuildContext context) {
     if (_nom.isEmpty ||
-        _fechan==DateTime.now() ||
+        _fechan == DateTime.now() ||
         _telefono.isEmpty ||
         _password.isEmpty ||
-        _confirmPassword.isEmpty) {
-      // faltan datos obligatorios
+        _confirmPassword.isEmpty ||
+        _descripcion.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content:
                 Text('Por favor, completa todos los campos obligatorios.')),
       );
-    } else if (user?.rol == 'Profesor' &&
-        (_horarios.isEmpty)) {
-      // el profesor no completó materia y horarios
+    } else if (user?.rol == 'Profesor' && (_horarios.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text(
-                'Los profesores deben seleccionar un horario.')),
+            content: Text('Los profesores deben seleccionar un horario.')),
       );
     } else if (_password != _confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -345,7 +524,7 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     }
   }
 
-  void _showConfirmationDialog(BuildContext context){
+  void _showConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -362,6 +541,9 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
             TextButton(
               child: const Text('Confirmar'),
               onPressed: () async {
+                if (_selectedImage != null) {
+                  await uploadimg();
+                }
                 user = User(
                     id: user!.id,
                     email: user!.email,
@@ -370,14 +552,16 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
                     telefono: _telefono,
                     fechanacimiento: _fechan,
                     nombre: _nom,
-                    horario: user!.rol == 'Profesor' ?_horarios : null,
-                  );
+                    horario: user!.rol == 'Profesor' ? _horarios : null,
+                    idMateria: user!.idMateria,
+                    descripcion: _descripcion,
+                    fotoperfil: _urlfoto.isNotEmpty ? _urlfoto : null);
                 // Guardar en la base de datos
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 await prefs.setString('nombre', user!.nombre);
-                await MentorMeDatabase.instance.updateUser(user!);
+                await FirebaseServices.instance.updateUser(user!);
                 Navigator.of(context).pop();
-                Navigator.pushReplacementNamed(context, 'home'); 
+                Navigator.pushReplacementNamed(context, 'home');
               },
             ),
           ],

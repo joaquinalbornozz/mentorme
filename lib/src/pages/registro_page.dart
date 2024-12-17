@@ -1,11 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // Para formatear fechas.
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import '../models/materia.dart';
 import '../models/user.dart';
 import '../database/database.dart';
 import '/src/utils/responsive.dart';
+import 'package:http/http.dart' as http;
 
 class RegistroPage extends StatefulWidget {
   const RegistroPage({super.key});
@@ -17,21 +23,25 @@ class RegistroPage extends StatefulWidget {
 class _RegistroPageState extends State<RegistroPage> {
   String _nom = '';
   String _email = '';
-  DateTime _fechan=DateTime(1000);
+  DateTime _fechan = DateTime(1000);
   String _telefono = '';
-  List<String?> _materiaSeleccionada=[];
+  List<String?> _materiaSeleccionada = [];
   String _rolSeleccionado = 'Sin rol';
   String _horarios = '';
   String _password = '';
   String _confirmPassword = '';
+  String _urlfoto = '';
+  String _descripcion = '';
 
   final TextEditingController _inputFieldController = TextEditingController();
   final TextEditingController _telefonoController = TextEditingController();
   final TextEditingController _horariosController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-
-  List<Materia> materias = []; 
+  final TextEditingController _descripcionController = TextEditingController();
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+  List<Materia> materias = [];
   final List<String> _roles = ['Sin rol', 'Alumno', 'Profesor'];
 
   @override
@@ -96,10 +106,22 @@ class _RegistroPageState extends State<RegistroPage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    SizedBox(height: responsive.hp(3)),
+                    _fotoperfil(),
+                    Text(
+                      '¡Selecciona una foto para que los demás usuarios te conozcan!',
+                      style: TextStyle(
+                        fontSize: responsive.dp(1),
+                        color: const Color(0xFF4B5563),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),
-              SizedBox(height: responsive.hp(3)),
+              const SizedBox(height: 20),
+              __descripcion(),
+              const SizedBox(height: 20),
               _emailInput(),
               const SizedBox(height: 20),
               _nombreInput(),
@@ -270,8 +292,8 @@ class _RegistroPageState extends State<RegistroPage> {
     if (calendario != null) {
       setState(() {
         _fechan = calendario; // Formatear la fecha correctamente
-        _inputFieldController.text = DateFormat('yyyy-MM-dd')
-            .format(calendario);
+        _inputFieldController.text =
+            DateFormat('yyyy-MM-dd').format(calendario);
       });
     }
   }
@@ -332,11 +354,11 @@ class _RegistroPageState extends State<RegistroPage> {
   Widget _materiasMultiSelect() {
     return MultiSelectDialogField<String?>(
       items: materias.map((materia) {
-        return MultiSelectItem<String?>(
-            materia.id, materia.nombre); // `nombre` es un campo de la clase Materia
+        return MultiSelectItem<String?>(materia.id,
+            materia.nombre); // `nombre` es un campo de la clase Materia
       }).toList(),
       title: const Text("Seleccionar Materias"),
-      selectedColor: const Color(0xFF1E3A8A), 
+      selectedColor: const Color(0xFF1E3A8A),
       buttonText: const Text(
         "Materias",
         style: TextStyle(
@@ -385,6 +407,83 @@ class _RegistroPageState extends State<RegistroPage> {
     );
   }
 
+  Widget _fotoperfil() {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) => _buildImagePickerOptions(),
+        );
+      },
+      child: CircleAvatar(
+        radius: 60,
+        backgroundColor: Colors.grey[200],
+        backgroundImage:
+            _selectedImage != null ? FileImage(_selectedImage!) : null,
+        child: _selectedImage == null
+            ? const Icon(
+                Icons.camera_alt,
+                size: 40,
+                color: Colors.grey,
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildImagePickerOptions() {
+    return SafeArea(
+      child: Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Seleccionar de la galería'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('Tomar una foto'),
+            onTap: () {
+              Navigator.pop(context);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Widget __descripcion() {
+    return TextField(
+      controller: _descripcionController,
+      maxLines: 6,
+      decoration: const InputDecoration(
+        labelText: 'Descripción',
+        hintText:
+            'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
+        border: OutlineInputBorder(),
+        alignLabelWithHint: true,
+      ),
+      onChanged: (valor) {
+        setState(() {
+          _descripcion = valor;
+        });
+      },
+    );
+  }
+
   Widget _buildRegisterButton(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -406,11 +505,12 @@ class _RegistroPageState extends State<RegistroPage> {
   void _validateAndShowConfirmationDialog(BuildContext context) {
     if (_nom.isEmpty ||
         _email.isEmpty ||
-        _fechan==DateTime(1000) ||
+        _fechan == DateTime(1000) ||
         _telefono.isEmpty ||
         _rolSeleccionado == 'Sin rol' ||
         _password.isEmpty ||
-        _confirmPassword.isEmpty) {
+        _confirmPassword.isEmpty ||
+        _descripcion.isEmpty) {
       // faltan datos obligatorios
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -436,19 +536,41 @@ class _RegistroPageState extends State<RegistroPage> {
     }
   }
 
-  Future<void> _guardarSesion(int id) async {
+  Future<void> _guardarSesion(String id) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('email', _email);
     await prefs.setString('rol', _rolSeleccionado);
-    await prefs.setString('nombre', _nom);  // Si quieres guardar más datos, lo puedes hacer aquí
-    await prefs.setInt('userid', id);
+    await prefs.setString('nombre', _nom);
+    await prefs.setString('userid', id);
   }
-  List<String>? idmaterias(List<String?> mat){
-    List<String>? L= mat.nonNulls.toList();
+
+  List<String>? idmaterias(List<String?> mat) {
+    List<String>? L = mat.nonNulls.toList();
     return L;
   }
-  void _showConfirmationDialog(BuildContext context){
+
+  Future<void> uploadimg() async {
+    var request = http.MultipartRequest('POST',
+        Uri.parse('https://api.cloudinary.com/v1_1/dci0bezbf/image/upload'))
+      ..fields['upload_preset'] = 'xurkaexw'
+      ..files
+          .add(await http.MultipartFile.fromPath('file', _selectedImage!.path));
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      final responseData = await response.stream.toBytes();
+      final responseString = String.fromCharCodes(responseData);
+      final jsonmap = jsonDecode(responseString);
+      setState(() {
+        _urlfoto = jsonmap['url'];
+      });
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
+
+  void _showConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -465,22 +587,28 @@ class _RegistroPageState extends State<RegistroPage> {
             TextButton(
               child: const Text('Confirmar'),
               onPressed: () async {
+                if (_selectedImage != null) {
+                  await uploadimg();
+                }
                 User newUser = User(
-                  nombre: _nom,
-                  email: _email,
-                  fechanacimiento: _fechan,
-                  telefono: _telefono,
-                  rol: _rolSeleccionado,
-                  idMateria: _rolSeleccionado == 'Profesor' ? idmaterias(_materiaSeleccionada) : null,
-                  horario: _rolSeleccionado == 'Profesor' ? _horarios : null,
-                  password: _password, 
-                );
+                    nombre: _nom,
+                    email: _email,
+                    fechanacimiento: _fechan,
+                    telefono: _telefono,
+                    rol: _rolSeleccionado,
+                    idMateria: _rolSeleccionado == 'Profesor'
+                        ? idmaterias(_materiaSeleccionada)
+                        : null,
+                    horario: _rolSeleccionado == 'Profesor' ? _horarios : null,
+                    password: _password,
+                    descripcion: _descripcion,
+                    fotoperfil: _urlfoto.isNotEmpty ? _urlfoto : null);
 
                 // Guardar en la base de datos
-                int id=await MentorMeDatabase.instance.insertUser(newUser);
+                String id = await FirebaseServices.instance.insertUser(newUser);
 
                 _guardarSesion(id);
-                Navigator.pushReplacementNamed(context, 'home'); 
+                Navigator.pushReplacementNamed(context, 'home');
               },
             ),
           ],

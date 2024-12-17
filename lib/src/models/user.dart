@@ -49,7 +49,7 @@ class User {
       fechanacimiento: DateTime.parse(map['fechanacimiento']),
       telefono: map['telefono'],
       rol: map['rol'],
-      idMateria: List.from(map['idMateria']),
+      idMateria: map['idMateria'] is Iterable? List.from(map['idMateria']) :null,
       horario: map['horario'],
       descripcion: map['descripcion'],
       fotoperfil: map['fotoperfil'],
