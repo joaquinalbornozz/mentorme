@@ -1,12 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/materia.dart';
-import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/pages/tutorias/estadisticaAlumno_page.dart';
 import 'package:mentorme/src/pages/tutorias/estadisticasprofesor_page.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EstadisticasPage extends StatefulWidget {
@@ -29,13 +28,13 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
 
   Future<User?> getUsuario() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    final userid = prefs.getInt('userid');
+    final userid = prefs.getString('userid');
     if (userid == null) {
       navigateToWelcome();
       return null;
     }
-    final db = MentorMeDatabase.instance;
-    User? alu = await db.getUserbyId(userid);
+    final db = FirebaseServices.instance;
+    User? alu = await db.getUserById(userid);
     return alu;
   }
 
@@ -48,7 +47,6 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
       isAlumno = user?.rol == 'Alumno';
     });
 
-    // Llamada a la función de estadísticas adecuada según el rol del usuario
     if (isAlumno) {
       await estadisticaAlumno();
     } else {
@@ -63,19 +61,18 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
       });
       return;
     }
-    final db = MentorMeDatabase.instance;
-    List<Tutoria> tutorias = await db.getTutoriasByIdAlu(user?.id);
+    final db = FirebaseServices.instance;
+    List<Map<String,dynamic>> tutorias = await db.getTutorias('Alumno',user!.id!);
 
     num totalCalificacion = 0;
     int tutoriasCompletadas = 0;
     Map<String, int> materias = {};
 
     for (var t in tutorias) {
-      totalCalificacion += t.calificacionalumno ?? 0;
-      if (t.dia.isBefore(DateTime.now())) tutoriasCompletadas++;
+      totalCalificacion += t['calificacionalumno'] ?? 1;
+      if (t['dia'].isBefore(DateTime.now())) tutoriasCompletadas++;
 
-      User? profesor = await db.getUserbyId(t.idProfesor); 
-      Materia? materia = await db.getMateriaById(profesor?.idMateria);
+      Materia? materia = await db.getMateriaById(t['idMateria']);
 
       if (materia != null) {
         materias[materia.nombre] = (materias[materia.nombre] ?? 0) + 1;
@@ -106,8 +103,8 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
       });
       return;
     }
-    final db = MentorMeDatabase.instance;
-    List<Tutoria> tutorias = await db.getTutoriasByIdProf(user?.id);
+    final db = FirebaseServices.instance;
+    List<Map<String,dynamic>> tutorias = await db.getTutorias('Profesor',user!.id!);
 
     num totalCalificacion = 0;
     int tutoriasCompletadas = 0;
@@ -117,13 +114,13 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
     List<int> idAlumnos = [];
 
     for (var t in tutorias) {
-      totalCalificacion += t.calificacionProfesor ?? 0;
-      if (t.dia.isBefore(DateTime.now())) tutoriasCompletadas++;
-      if (t.tareasAsignadas?.isNotEmpty ?? false) tareasAsignadas++;
-      if (t.notasSeguimiento?.isNotEmpty ?? false) notasSeguimiento++;
+      totalCalificacion += t['calificacionProfesor'] ?? 0;
+      if (t['dia'].isBefore(DateTime.now())) tutoriasCompletadas++;
+      if (t['tareasAsignadas']?.isNotEmpty ?? false) tareasAsignadas++;
+      if (t['notasSeguimiento']?.isNotEmpty ?? false) notasSeguimiento++;
       
-      if (!idAlumnos.contains(t.idAlumno)) {
-        idAlumnos.add(t.idAlumno);
+      if (!idAlumnos.contains(t['idAlumno'])) {
+        idAlumnos.add(t['idAlumno']);
         cantAlumnos++;
       }
     }

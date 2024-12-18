@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/pages/tutorias/tutoria_page.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,13 +15,13 @@ class HistorialPage extends StatefulWidget {
 }
 
 class _HistorialPageState extends State<HistorialPage> {
-  List<Tutoria> tutorias = [];
+  List<Map<String,dynamic>> tutorias = [];
   List<String> nombresAlu=[];
   List<String> nombresProf=[];
   List<String> materias=[];
   String? rol; // Role can be either 'Alumno' or 'Profesor'
   String? userName; // Either the student or professor name
-  int? userid;
+  String? userid;
   bool isLoading = true;
 
   @override
@@ -34,44 +34,30 @@ class _HistorialPageState extends State<HistorialPage> {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     rol = prefs.getString('rol');
     userName = prefs.getString('nombre');
-    userid= prefs.getInt('userid');
+    userid= prefs.getString('userid');
     if(userid==null){
       Navigator.pushNamed(context, 'welcome');
     }
     
 
-    final List<Tutoria> allTutorias = await MentorMeDatabase.instance.getTutorias();
-    final List<Tutoria> confirmedTutorias = rol=='Profesor'
-                                              ? allTutorias.where((tutoria) => tutoria.confirmada).where((tutoria)=> tutoria.idProfesor==userid).where((tutoria)=> tutoria.dia.isBefore(DateTime.now())).toList()
-                                              :allTutorias.where((tutoria) => tutoria.confirmada).where((tutoria)=> tutoria.idAlumno==userid).where((tutoria)=> tutoria.dia.isBefore(DateTime.now())).toList();
-
-    List<String> fetchedNombresAlu = [];
-    List<String> fetchedNombresProf = [];
-    List<String> fetchedMaterias = [];
+    final List<Map<String,dynamic>> allTutorias = await FirebaseServices.instance.getTutorias(rol!, userid!);
+    final List<Map<String,dynamic>> confirmedTutorias = allTutorias.where((tutoria) {return tutoria['confirmada'] && DateTime.parse(tutoria['dia']).isBefore(DateTime.now()); }).toList();
 
     for (var tutoria in confirmedTutorias) {
+      tutoria['tutoria'] =Tutoria.fromMap(tutoria);
       if (rol=='Profesor') {
-        User? userAlu = await MentorMeDatabase.instance.getUserbyId(tutoria.idAlumno);
-        fetchedNombresAlu.add(userAlu?.nombre ?? 'Desconocido');
+        User? userAlu = await FirebaseServices.instance.getUserById(tutoria['idAlumno']);
+        tutoria['nombreAlu']= userAlu?.nombre;
       }else{
-        User? userPro = await MentorMeDatabase.instance.getUserbyId(tutoria.idProfesor);
-        if (userPro != null) {
-          fetchedNombresProf.add(userPro.nombre);
-          Materia? materia = await MentorMeDatabase.instance.getMateriaById(userPro.idMateria);
-          fetchedMaterias.add(materia?.nombre ?? 'Materia Desconocida');
-        } else {
-          fetchedNombresProf.add('Desconocido');
-          fetchedMaterias.add('Materia Desconocida');
-        }
+        User? userPro = await FirebaseServices.instance.getUserById(tutoria['idProfesor']);
+        tutoria['nombrePro']= userPro?.nombre;
       }
+      Materia? materia = await FirebaseServices.instance.getMateriaById(tutoria['idMateria']);
+      tutoria['nombreMateria']= materia?.nombre;
     }
 
-    // Update state once all data is fetched
     setState(() {
       tutorias = confirmedTutorias;
-      nombresAlu = fetchedNombresAlu;
-      nombresProf = fetchedNombresProf;
-      materias = fetchedMaterias;
       isLoading = false;
     });
   }
@@ -112,18 +98,16 @@ class _HistorialPageState extends State<HistorialPage> {
                                 child: ListTile(
                                   title: Text(
                                     rol == 'Profesor'
-                                        ? 'Alumno: ${nombresAlu[index]}' // Use fetched student name
-                                        : 'Profesor: ${nombresProf[index]}', // Use fetched professor name
+                                        ? 'Alumno: ${tutoria['nombreAlu']}' 
+                                        : 'Profesor: ${tutoria['nombrePro']}', 
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   
-                                  subtitle: rol == 'Alumno'
-                                              ?Text('Materia: ${materias[index]}\n''Fecha: ${tutoria.dia.toLocal()}')
-                                              :Text('Fecha: ${tutoria.dia.toLocal()}'),
+                                  subtitle:Text('Materia: ${materias[index]}\n''Fecha: ${tutoria['tutoria'].dia.toLocal()}'),
                                   onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => TutoriaPage(tutoria: tutoria),
+                                          builder: (context) => TutoriaPage(tutoria: tutoria['tutoria']),
                                         ),
                                   ),
                                 ),

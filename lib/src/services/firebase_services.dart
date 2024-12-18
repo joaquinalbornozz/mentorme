@@ -110,15 +110,41 @@ class FirebaseServices {
     await users.doc(user.id).update(user.toMap());
   }
 
-  Future<List<User>> getProfesoresbyMateria(String idMateria) async{
-    List<User> profesores=[];
-    QuerySnapshot snapshot = await users.where('idMateria',arrayContains: idMateria).get();
-    for(var doc in snapshot.docs){
-      Map<String,dynamic> data= doc.data() as Map<String,dynamic>;
+  Future<List<User>> getProfesoresbyMateria(String idMateria) async {
+    List<User> profesores = [];
+    QuerySnapshot snapshot =
+        await users.where('idMateria', arrayContains: idMateria).get();
+    for (var doc in snapshot.docs) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
       data['id'] = doc.id;
-      User u= User.fromMap(data);
+      User u = User.fromMap(data);
       profesores.add(u);
     }
+    return profesores;
+  }
+
+  Future<List<User>> getProfesoresPorAlumno(String idAlu) async {
+    QuerySnapshot snapshottut = await tutorias
+        .where('idAlumno', isEqualTo: idAlu)
+        .where('confirmada', isEqualTo: true)
+        .get();
+
+    List<String> p = snapshottut.docs
+        .map((doc) =>
+            (doc.data() as Map<String, dynamic>)['idProfesor'] as String?)
+        .where((id) => id != null)
+        .cast<String>()
+        .toSet()
+        .toList();
+
+    if (p.isEmpty) return [];
+    QuerySnapshot snapshotUsers =
+        await users.where(FieldPath.documentId, whereIn: p).get();
+    List<User> profesores = snapshotUsers.docs.map((doc) {
+      return User.fromMap(doc.data() as Map<String, dynamic>);
+    }).toList();
+    profesores.sort((a, b) => a.nombre.compareTo(b.nombre));
+
     return profesores;
   }
 
@@ -153,14 +179,26 @@ class FirebaseServices {
     await instance.insertNotificacion(n);
   }
 
-  Future<void> insertTutoria(Tutoria t) async{
+  Future<void> insertTutoria(Tutoria t) async {
     await tutorias.add(t.toMap());
   }
 
-  
+  Future<List<Tutoria>> getTutoriasPorProfesorYAlumno(
+      String idProf, String idAlu) async {
+    QuerySnapshot snapshot = await tutorias
+        .where('idProfesor', isEqualTo: idProf)
+        .where('idAlumno', isEqualTo: idAlu)
+        .get();
+    List<Tutoria> t = snapshot.docs.map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      data['id'] = doc.id;
+      return Tutoria.fromMap(data);
+    }).toList();
+    return t;
+  }
 
   // ------------Notificaciones ------------
-  Future<void> insertNotificacion(Notificacion n) async{
+  Future<void> insertNotificacion(Notificacion n) async {
     await notificaciones.add(n.toMap());
   }
 }

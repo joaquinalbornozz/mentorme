@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mentorme/src/models/user.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/pages/tutorias/detalleseguimiento_page.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SeguimientoPorProfesorPage extends StatefulWidget {
@@ -22,9 +22,9 @@ class _SeguimientoPorProfesorPageState extends State<SeguimientoPorProfesorPage>
 
   Future<void> _loadProfesores() async {
     // Load professors who have had tutoring sessions with the student
-    final db = MentorMeDatabase.instance;
+    final db = FirebaseServices.instance;
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('userid');
+    final userId = prefs.getString('userid');
     final profesorList = await db.getProfesoresPorAlumno(userId!);
     setState(() {
       profesores = profesorList;
@@ -40,16 +40,21 @@ class _SeguimientoPorProfesorPageState extends State<SeguimientoPorProfesorPage>
         itemBuilder: (context, index) {
           final profesor = profesores[index];
           return Card(
-            child: ListTile(
-              title: Text(profesor.nombre),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetalleSeguimientoPage(profesorId: profesor.id!),
-                  ),
-                );
-              },
+            child: Row(
+              children: [
+                CircleAvatar(radius: 10, backgroundImage: profesor.fotoperfil!=null && profesor.fotoperfil!.isNotEmpty? NetworkImage(profesor.fotoperfil!):const AssetImage("assets/images/user.png")),
+                ListTile(
+                  title: Text(profesor.nombre),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetalleSeguimientoPage(profesor: profesor),
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           );
         },

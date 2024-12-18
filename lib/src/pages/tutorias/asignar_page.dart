@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
+import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
-import 'package:mentorme/src/pages/tutorias/confirmar_tutoria_page.dart';
+import 'package:mentorme/src/pages/tutorias/tutoria_page.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,9 +15,8 @@ class AsignarTareasPage extends StatefulWidget {
 }
 
 class _AsignarTareasPageState extends State<AsignarTareasPage> {
-  List<Tutoria> tutorias = [];
-  List<String> nombresAlumnos = [];
-  List<String> materias = [];
+  List<Map<String,dynamic>> tutorias = [];
+
   bool isLoading = true;
 
   @override
@@ -27,29 +27,23 @@ class _AsignarTareasPageState extends State<AsignarTareasPage> {
 
   Future<void> fetchTutorias() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? idProfesor = prefs.getInt('userid');
+    String? idProfesor = prefs.getString('userid');
 
-    final List<Tutoria> allTutorias = await MentorMeDatabase.instance.getTutorias();
-    final List<Tutoria> pendientes = allTutorias
-        .where((tutoria) => !tutoria.confirmada && tutoria.idProfesor == idProfesor)
-        .where((tutoria)=> tutoria.dia.isBefore(DateTime.now()) && (tutoria.devolucion==null || tutoria.notasSeguimiento==null || tutoria.tareasAsignadas==null))
+    final List<Map<String,dynamic>> allTutorias = await FirebaseServices.instance.getTutorias('Profesor',idProfesor!);
+    final List<Map<String,dynamic>> pendientes = allTutorias
+        .where((tutoria) => !tutoria['confirmada'])
+        .where((tutoria)=> DateTime.parse(tutoria['dia']).isBefore(DateTime.now()) && (tutoria['devolucion']==null || tutoria['notasSeguimiento']==null || tutoria['tareasAsignadas']==null))
         .toList();
-
-    List<String> fetchedNombresAlumnos = [];
-
     for (var tutoria in pendientes) {
-      User? userAlumno = await MentorMeDatabase.instance.getUserbyId(tutoria.idAlumno);
-      if (userAlumno != null) {
-        fetchedNombresAlumnos.add(userAlumno.nombre);
-        
-      } else {
-        fetchedNombresAlumnos.add('Alumno Desconocido');
-      }
+      tutoria['tutoria']=Tutoria.fromMap(tutoria);
+      User? userAlumno = await FirebaseServices.instance.getUserById(tutoria['idAlumno']);
+      tutoria['nombreAlu']=userAlumno?.nombre ?? "Descononocido";
+      Materia? materia= await FirebaseServices.instance.getMateriaById(tutoria['idMateria']);
+      tutoria['nombreMateria']=materia?.nombre?? "Materia Desconocida";
     }
 
     setState(() {
       tutorias = pendientes;
-      nombresAlumnos = fetchedNombresAlumnos;
       isLoading = false;
     });
   }
@@ -91,18 +85,18 @@ class _AsignarTareasPageState extends State<AsignarTareasPage> {
                                   margin: const EdgeInsets.symmetric(vertical: 10),
                                   child: ListTile(
                                     title: Text(
-                                      'Alumno: ${nombresAlumnos[index]}',
+                                      'Alumno: ${tutoria['nombreAlu']}',
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text(
-                                      'Fecha: ${tutoria.dia.toLocal()}',
+                                      'Materia: ${tutoria['nombreMateria']} \n Fecha: ${tutoria['tutoria'].dia.toLocal()}',
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {
                                       final String resultado= await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ConfirmarTutoriaPage(tutoria: tutoria),
+                                          builder: (context) => TutoriaPage(tutoria: tutoria['tutoria']),
                                         ),
                                       );
                                       fetchTutorias();
