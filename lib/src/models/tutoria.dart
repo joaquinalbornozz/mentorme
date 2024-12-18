@@ -29,13 +29,13 @@ class Tutoria {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      //'id': id,
       'idAlumno': idAlumno,
       'idProfesor': idProfesor,
       'idMateria': idMateria,
       'dia': dia.toIso8601String(),
       'descripcion': descripcion,
-      'confirmada': confirmada ? 1 : 0,
+      'confirmada': confirmada,
       if(devolucion!=null)'devolucion': devolucion,
       if(calificacionalumno!=null)'calificacionalumno': calificacionalumno,
       if(calificacionProfesor!=null)'calificacionProfesor': calificacionProfesor,
@@ -52,7 +52,7 @@ class Tutoria {
       idMateria: map['idMateria'],
       dia: DateTime.parse(map['dia']),
       descripcion: map['descripcion'],
-      confirmada: map['confirmada'] == 1,
+      confirmada: map['confirmada'],
       devolucion: map['devolucion'],
       calificacionalumno: map['calificacionalumno'],
       calificacionProfesor: map['calificacionProfesor'],

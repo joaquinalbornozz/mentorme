@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mentorme/src/pages/admin/admin_page.dart';
-import 'package:mentorme/src/pages/tutorias/A_confirmar_page.dart';
+import 'package:mentorme/src/pages/tutorias/a_confirmar_page.dart';
 import 'package:mentorme/src/pages/tutorias/pendientes_page.dart';
 import 'package:mentorme/src/pages/perfil_page.dart';
 import 'package:mentorme/src/pages/tutorias/tutorias_page.dart';

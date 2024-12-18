@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/models/tutoria.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TutoriaPage extends StatefulWidget {
   final Tutoria tutoria;
 
-  const TutoriaPage({Key? key, required this.tutoria}) : super(key: key);
+  const TutoriaPage({super.key, required this.tutoria});
 
   @override
   _TutoriaPageState createState() => _TutoriaPageState();
@@ -30,16 +30,16 @@ class _TutoriaPageState extends State<TutoriaPage> {
   }
 
   Future<User?> getProfesor() async {
-    return await MentorMeDatabase.instance.getUserbyId(widget.tutoria.idProfesor);
+    return await FirebaseServices.instance.getUserById(widget.tutoria.idProfesor);
   }
 
   Future<User?> getAlumno() async {
-    return await MentorMeDatabase.instance.getUserbyId(widget.tutoria.idAlumno);
+    return await FirebaseServices.instance.getUserById(widget.tutoria.idAlumno);
   }
 
-  Future<Materia?> getMateria(int? idMateria) async {
+  Future<Materia?> getMateria(String? idMateria) async {
     return idMateria != null
-        ? await MentorMeDatabase.instance.getMateriaById(idMateria)
+        ? await FirebaseServices.instance.getMateriaById(idMateria)
         : null;
   }
 
@@ -63,7 +63,7 @@ class _TutoriaPageState extends State<TutoriaPage> {
         ratingProfesor = rating;
         widget.tutoria.calificacionProfesor = rating;
       });
-      await MentorMeDatabase.instance.updateTutoria(widget.tutoria);
+      await FirebaseServices.instance.updateTutoria(widget.tutoria.id,{'calificacionProfesor': rating});
     });
   }
 
@@ -73,7 +73,7 @@ class _TutoriaPageState extends State<TutoriaPage> {
         ratingAlumno = rating;
         widget.tutoria.calificacionalumno = rating;
       });
-      await MentorMeDatabase.instance.updateTutoria(widget.tutoria);
+      await FirebaseServices.instance.updateTutoria(widget.tutoria.id,{'calificacionalumno': rating});
     });
   }
 
@@ -162,7 +162,7 @@ class _TutoriaPageState extends State<TutoriaPage> {
                   widget.tutoria.tareasAsignadas = tareasAsignadas;
                   widget.tutoria.notasSeguimiento = notaSeguimiento;
                 });
-                await MentorMeDatabase.instance.updateTutoria(widget.tutoria);
+                await FirebaseServices.instance.updateTutoria(widget.tutoria.id, widget.tutoria.toMap());
                 Navigator.pop(context);
               },
               child: const Text("Guardar"),
@@ -200,22 +200,32 @@ class _TutoriaPageState extends State<TutoriaPage> {
                     future: rol == 'Alumno' ? getProfesor() : getAlumno(),
                     builder: (context, snapshot) {
                       final User? user = snapshot.data;
+                      final url= user!.fotoperfil;
                       if (rol == 'Alumno') {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              user != null
-                                  ? 'Profesor: ${user.nombre}'
-                                  : 'Profesor no encontrado',
-                              style: TextStyle(
-                                fontSize: responsive.dp(2),
-                                fontWeight: FontWeight.bold,
+                            Card(
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundImage:url!=null || url!.isNotEmpty? NetworkImage(url): const AssetImage('assets/images/user.png'),
+                                  ),
+                                  Text(
+                                    user !=null
+                                        ? 'Profesor: ${user.nombre}'
+                                        : 'Profesor no encontrado',
+                                    style: TextStyle(
+                                      fontSize: responsive.dp(2),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             SizedBox(height: responsive.dp(2)),
                             FutureBuilder<Materia?>(
-                              future: getMateria(user?.idMateria),
+                              future: getMateria(widget.tutoria.idMateria),
                               builder: (context, snapshot) {
                                 final Materia? materia = snapshot.data;
                                 return Text(
@@ -232,14 +242,34 @@ class _TutoriaPageState extends State<TutoriaPage> {
                           ],
                         );
                       } else {
-                        return Text(
-                          user != null
-                              ? 'Alumno: ${user.nombre}'
-                              : 'Alumno no encontrado',
-                          style: TextStyle(
-                            fontSize: responsive.dp(2),
-                            fontWeight: FontWeight.bold,
-                          ),
+                        return Column(
+                          children: [
+                            Text(
+                              user != null
+                                  ? 'Alumno: ${user.nombre}'
+                                  : 'Alumno no encontrado',
+                              style: TextStyle(
+                                fontSize: responsive.dp(2),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: responsive.dp(2)),
+                            FutureBuilder<Materia?>(
+                              future: getMateria(widget.tutoria.idMateria),
+                              builder: (context, snapshot) {
+                                final Materia? materia = snapshot.data;
+                                return Text(
+                                  materia != null
+                                      ? 'Materia: ${materia.nombre}\n'
+                                      : 'Materia no encontrada',
+                                  style: TextStyle(
+                                    fontSize: responsive.dp(2),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         );
                       }
                     },

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/pages/tutorias/confirmar_tutoria_page.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ConfirmarPage extends StatefulWidget {
@@ -13,9 +13,7 @@ class ConfirmarPage extends StatefulWidget {
 }
 
 class _ConfirmarPageState extends State<ConfirmarPage> {
-  List<Tutoria> tutorias = [];
-  List<String> nombresAlumnos = [];
-  List<String> materias = [];
+  List<Map<String, dynamic>> tutorias = [];
   bool isLoading = true;
 
   @override
@@ -26,31 +24,25 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
 
   Future<void> fetchTutorias() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? idProfesor = prefs.getInt('userid');
+    String? idProfesor = prefs.getString('userid');
+    if (idProfesor == null) {
+      Navigator.pushNamed(context, 'welcome');
+      return;
+    }
+    final List<Map<String, dynamic>> allTutorias =
+        await FirebaseServices.instance.getTutorias('Profesor', idProfesor);
+    final List<Map<String, dynamic>> pendientes =
+        allTutorias.where((tutoria) => !tutoria['confirmada']).toList();
 
-    // Fetch all tutorias where confirmation is pending and assigned to this professor
-    final List<Tutoria> allTutorias = await MentorMeDatabase.instance.getTutorias();
-    final List<Tutoria> pendientes = allTutorias
-        .where((tutoria) => !tutoria.confirmada && tutoria.idProfesor == idProfesor)
-        .toList();
-
-    List<String> fetchedNombresAlumnos = [];
-
-    // Asynchronously fetch student names and subject details
     for (var tutoria in pendientes) {
-      //print(tutoria.toMap());
-      User? userAlumno = await MentorMeDatabase.instance.getUserbyId(tutoria.idAlumno);
-      if (userAlumno != null) {
-        fetchedNombresAlumnos.add(userAlumno.nombre);
-        
-      } else {
-        fetchedNombresAlumnos.add('Alumno Desconocido');
-      }
+      tutoria['tutoria'] = Tutoria.fromMap(tutoria);
+      User? userAlumno =
+          await FirebaseServices.instance.getUserById(tutoria['idAlumno']);
+      tutoria['alumno'] = userAlumno?.nombre ?? "Desconocido";
     }
 
     setState(() {
       tutorias = pendientes;
-      nombresAlumnos = fetchedNombresAlumnos;
       isLoading = false;
     });
   }
@@ -69,11 +61,13 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
                   children: [
                     const Text(
                       'Tutorías a Confirmar',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
                     tutorias.isEmpty
-                        ? const Text('No tienes tutorías pendientes de confirmación.',
+                        ? const Text(
+                            'No tienes tutorías pendientes de confirmación.',
                             style: TextStyle(fontSize: 16, color: Colors.grey))
                         : Expanded(
                             child: ListView.builder(
@@ -81,35 +75,42 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
                               itemBuilder: (context, index) {
                                 final tutoria = tutorias[index];
                                 return Card(
-                                  margin: const EdgeInsets.symmetric(vertical: 10),
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 10),
                                   child: ListTile(
                                     title: Text(
-                                      'Alumno: ${nombresAlumnos[index]}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      'Alumno: ${tutoria['alumno']}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text(
-                                      'Fecha: ${tutoria.dia.toLocal()}',
+                                      'Fecha: ${tutoria['tutoria'].dia.toLocal()}',
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {
-                                      final String resultado= await Navigator.push(
+                                      final String resultado =
+                                          await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => ConfirmarTutoriaPage(tutoria: tutoria),
+                                          builder: (context) =>
+                                              ConfirmarTutoriaPage(
+                                                  tutoria: tutoria['tutoria']),
                                         ),
                                       );
                                       fetchTutorias();
-                                      if(resultado=='confirmada'){
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                      if (resultado == 'confirmada') {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('La Tutoria fue Confirmada')),
+                                              content: Text(
+                                                  'La Tutoria fue Confirmada')),
                                         );
-                                      }else{
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('La Tutoria fue rechazada')),
+                                              content: Text(
+                                                  'La Tutoria fue rechazada')),
                                         );
                                       }
                                     },

@@ -419,7 +419,7 @@ class _RegistroPageState extends State<RegistroPage> {
         radius: 60,
         backgroundColor: Colors.grey[200],
         backgroundImage:
-            _selectedImage != null ? FileImage(_selectedImage!) : null,
+            _selectedImage != null ? FileImage(_selectedImage!) : const AssetImage('assets/images/user.png'),
         child: _selectedImage == null
             ? const Icon(
                 Icons.camera_alt,

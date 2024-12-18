@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/database/database.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,20 +14,20 @@ class NuevaTutoriaPage extends StatefulWidget {
 }
 
 class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
-  int? _materiaSeleccionadaId;
-  int? _profesorSeleccionadoId;
+  String? _materiaSeleccionadaId;
+  String? _profesorSeleccionadoId;
   DateTime? _fechaSeleccionada;
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
 
   // Future para obtener todas las materias
   Future<List<Materia>> _getMaterias() async {
-    return await MentorMeDatabase.instance.getAllMaterias();
+    return await FirebaseServices.instance.getAllMateriasFB();
   }
 
   // Future para obtener los profesores por materia
-  Future<List<User>> _getProfesoresPorMateria(int idMateria) async {
-    return await MentorMeDatabase.instance.getProfesoresbyMateria(idMateria);
+  Future<List<User>> _getProfesoresPorMateria(String idMateria) async {
+    return await FirebaseServices.instance.getProfesoresbyMateria(idMateria);
   }
 
   // Función para seleccionar una fecha
@@ -79,19 +79,19 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
                     return Text('Error: ${snapshot.error}');
                   } else if (snapshot.hasData) {
                     final materias = snapshot.data!;
-                    return DropdownButtonFormField<int>(
+                    return DropdownButtonFormField<String>(
                       decoration: const InputDecoration(
                         labelText: 'Materia',
                         border: OutlineInputBorder(),
                       ),
                       value: _materiaSeleccionadaId,
                       items: materias.map((materia) {
-                        return DropdownMenuItem<int>(
+                        return DropdownMenuItem<String>(
                           value: materia.id,
                           child: Text(materia.nombre),
                         );
                       }).toList(),
-                      onChanged: (int? materiaId) {
+                      onChanged: (String? materiaId) {
                         setState(() {
                           _materiaSeleccionadaId = materiaId;
                           _profesorSeleccionadoId = null;
@@ -119,20 +119,20 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
                       return Text('Error: ${snapshot.error}');
                     } else if (snapshot.hasData) {
                       final profesores = snapshot.data!;
-                      return DropdownButtonFormField<int>(
+                      return DropdownButtonFormField<String>(
                         decoration: const InputDecoration(
                           labelText: 'Profesor',
                           border: OutlineInputBorder(),
                         ),
                         value: _profesorSeleccionadoId,
                         items: profesores.map((profesor) {
-                          return DropdownMenuItem<int>(
+                          return DropdownMenuItem<String>(
                             value: profesor.id,
                             child: Text(
                                 '${profesor.nombre} - ${profesor.horario}'),
                           );
                         }).toList(),
-                        onChanged: (int? profesorId) {
+                        onChanged: (String? profesorId) {
                           setState(() {
                             _profesorSeleccionadoId = profesorId;
                           });
@@ -183,7 +183,7 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
                     onPressed: () {
                       if (_descripcionController.text.isNotEmpty) {
                         _crearTutoria(
-                          idAlumno: 1,
+                          idMateria: _materiaSeleccionadaId!,
                           idProfesor: _profesorSeleccionadoId!,
                           dia: _fechaSeleccionada!,
                           descripcion: _descripcionController.text,
@@ -210,21 +210,23 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
   }
 
   Future<void> _crearTutoria({
-    required int idAlumno,
-    required int idProfesor,
+    required String idMateria,
+    required String idProfesor,
     required DateTime dia,
     required String descripcion,
   }) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int? idAlumno = prefs.getInt('userid');
+    String? idAlumno = prefs.getString('userid');
     if (idAlumno != null) {
       final nuevaTutoria = Tutoria(
+        idMateria: idMateria,
         idAlumno: idAlumno,
         idProfesor: idProfesor,
         dia: dia,
         descripcion: descripcion,
+        confirmada: false
       );
-      await MentorMeDatabase.instance.insertTutoria(nuevaTutoria);
+      await FirebaseServices.instance.insertTutoria(nuevaTutoria);
       Navigator.pop(context, true);
     } else {
       Navigator.pushNamed(context, 'welcome');
