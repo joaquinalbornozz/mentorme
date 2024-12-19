@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:527977638458:android:b423c77a6f2b77c41b6303",
+        "android_client_info": {
+          "package_name": "com.example.mentorme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLP_di3qvidgRJ_wyZG7NbAmkseHSC1eg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:527977638458:android:a3d17ddb26eac2e31b6303",
         "android_client_info": {
           "package_name": "com.mentorme.app"

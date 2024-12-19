@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:mentorme/src/utils/responsive.dart'; 
+import 'package:mentorme/src/utils/responsive.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
+
+  Future<void> _cerrarSesion() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('rol');
+    prefs.remove('userid');
+    prefs.remove('isLoggedIn');
+    prefs.remove('email');
+    prefs.remove('nombre');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +75,8 @@ class AdminPage extends StatelessWidget {
               SizedBox(height: responsive.hp(2)),
 
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await _cerrarSesion();
                   Navigator.pushNamed(context, '/');
                 },
                 style: ElevatedButton.styleFrom(

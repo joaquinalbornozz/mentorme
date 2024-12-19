@@ -1,17 +1,18 @@
-import 'dart:convert';
+//import 'dart:convert';
 import 'dart:io';
 
+import 'package:cloudinary/cloudinary.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // Para formatear fechas.
+import 'package:mentorme/src/services/cloudinary_services.dart';
 import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import '../models/materia.dart';
 import '../models/user.dart';
-import '../database/database.dart';
 import '/src/utils/responsive.dart';
-import 'package:http/http.dart' as http;
+//import 'package:http/http.dart' as http;
 
 class RegistroPage extends StatefulWidget {
   const RegistroPage({super.key});
@@ -37,8 +38,10 @@ class _RegistroPageState extends State<RegistroPage> {
   final TextEditingController _telefonoController = TextEditingController();
   final TextEditingController _horariosController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   List<Materia> materias = [];
@@ -51,8 +54,8 @@ class _RegistroPageState extends State<RegistroPage> {
   }
 
   Future<void> _loadMaterias() async {
-    final db = MentorMeDatabase.instance;
-    final loadedMaterias = await db.getAllMaterias();
+    final db = FirebaseServices.instance;
+    final loadedMaterias = await db.getAllMateriasFB();
     setState(() {
       materias = loadedMaterias;
     });
@@ -169,6 +172,7 @@ class _RegistroPageState extends State<RegistroPage> {
         RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     return TextField(
       textCapitalization: TextCapitalization.sentences,
+      controller: _emailController,
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
         counter: Text('Letras ${_email.length}'),
@@ -176,16 +180,14 @@ class _RegistroPageState extends State<RegistroPage> {
         labelText: 'Correo Electronico',
         helperText: 'Tu correo electronico',
         suffixIcon: exp.hasMatch(_email)
-            ? const Icon(Icons.check_circle,
-                color: Colors.green) // Ícono de éxito si es válido
+            ? const Icon(Icons.check_circle, color: Colors.green)
             : _email.isEmpty
                 ? null
-                : const Icon(Icons.error,
-                    color: Colors.red), // Ícono de error si no es válido
+                : const Icon(Icons.error, color: Colors.red),
         errorText: _email.isNotEmpty && !exp.hasMatch(_email)
-            ? 'Formato inválido, use el formato correcto' // Mensaje de error si el formato no es válido
+            ? 'Formato inválido, use el formato correcto'
             : null,
-        icon: const Icon(Icons.email, color: Color(0xFF4B5563)), // Gris Neutro
+        icon: const Icon(Icons.email, color: Color(0xFF4B5563)),
       ),
       onChanged: (valor) {
         setState(() {
@@ -354,8 +356,7 @@ class _RegistroPageState extends State<RegistroPage> {
   Widget _materiasMultiSelect() {
     return MultiSelectDialogField<String?>(
       items: materias.map((materia) {
-        return MultiSelectItem<String?>(materia.id,
-            materia.nombre); // `nombre` es un campo de la clase Materia
+        return MultiSelectItem<String?>(materia.id, materia.nombre);
       }).toList(),
       title: const Text("Seleccionar Materias"),
       selectedColor: const Color(0xFF1E3A8A),
@@ -368,11 +369,11 @@ class _RegistroPageState extends State<RegistroPage> {
       ),
       onConfirm: (values) {
         setState(() {
-          _materiaSeleccionada = values.cast<String?>();
+          _materiaSeleccionada = values.cast<String>();
         });
       },
       chipDisplay: MultiSelectChipDisplay(
-        chipColor: const Color(0xFF60A5FA), // Celeste Claro
+        chipColor: const Color(0xFF60A5FA),
         textStyle: const TextStyle(color: Colors.white),
       ),
     );
@@ -384,7 +385,6 @@ class _RegistroPageState extends State<RegistroPage> {
 
     return TextField(
       controller: _horariosController,
-      keyboardType: TextInputType.datetime,
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
         hintText: 'Horario (ej. 10:00 AM)',
@@ -418,8 +418,9 @@ class _RegistroPageState extends State<RegistroPage> {
       child: CircleAvatar(
         radius: 60,
         backgroundColor: Colors.grey[200],
-        backgroundImage:
-            _selectedImage != null ? FileImage(_selectedImage!) : const AssetImage('assets/images/user.png'),
+        backgroundImage: _selectedImage != null
+            ? FileImage(_selectedImage!)
+            : const AssetImage('assets/images/user.png'),
         child: _selectedImage == null
             ? const Icon(
                 Icons.camera_alt,
@@ -470,12 +471,12 @@ class _RegistroPageState extends State<RegistroPage> {
       controller: _descripcionController,
       maxLines: 6,
       decoration: const InputDecoration(
-        labelText: 'Descripción',
-        hintText:
-            'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
-        border: OutlineInputBorder(),
-        alignLabelWithHint: true,
-      ),
+          labelText: 'Descripción',
+          hintText:
+              'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
+          border: OutlineInputBorder(),
+          alignLabelWithHint: true,
+          icon: Icon(Icons.assignment, color: Color(0xFF4B5563))),
       onChanged: (valor) {
         setState(() {
           _descripcion = valor;
@@ -551,22 +552,55 @@ class _RegistroPageState extends State<RegistroPage> {
   }
 
   Future<void> uploadimg() async {
-    var request = http.MultipartRequest('POST',
-        Uri.parse('https://api.cloudinary.com/v1_1/dci0bezbf/image/upload'))
-      ..fields['upload_preset'] = 'xurkaexw'
-      ..files
-          .add(await http.MultipartFile.fromPath('file', _selectedImage!.path));
-    http.StreamedResponse response = await request.send();
+    try {
+      final url= await upload_img(_selectedImage!);
+      if(url.isNotEmpty){
+        setState(() {
+          _urlfoto = url;
+        });
+      }
+      /*final cloudinary=Cloudinary.unsignedConfig(cloudName: "dci0bezbf");
+      
+      final bytes = _selectedImage!.readAsBytesSync();
+      print("Image read successfully, size: ${bytes.length} bytes");
+      final response = await
+        cloudinary.unsignedUpload
+        (
+        uploadPreset: "mentorme",
+        fileBytes: bytes,
+        resourceType: CloudinaryResourceType.raw,
+        fileName: 'user_${_nom}_$_email',
+        progressCallback: (count, total) {
+        print(
+        'Uploading image from file with progress: $count/$total');
+        });
 
-    if (response.statusCode == 200) {
-      final responseData = await response.stream.toBytes();
-      final responseString = String.fromCharCodes(responseData);
-      final jsonmap = jsonDecode(responseString);
-      setState(() {
-        _urlfoto = jsonmap['url'];
-      });
-    } else {
-      print(response.reasonPhrase);
+        if(response.isSuccessful) {
+        setState(() {
+          _urlfoto = response.url ?? '';
+        });
+        }*/
+      /*print('comienza a subir archivo ${_selectedImage?.path}');
+      var request = http.MultipartRequest('POST',
+          Uri.parse('https://api.cloudinary.com/v1_1/dci0bezbf/image/upload'))
+        ..fields['upload_preset'] = 'mentorme'
+        ..files.add(
+            await http.MultipartFile.fromPath('file', _selectedImage!.path));
+      print('Envio de request');
+      http.StreamedResponse response = await request.send();
+      print('Response con codigo de estado: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.toBytes();
+        final responseString = String.fromCharCodes(responseData);
+        final jsonmap = jsonDecode(responseString);
+        setState(() {
+          _urlfoto = jsonmap['url'];
+        });
+      } else {
+        print(response.reasonPhrase);
+      }*/
+    } on Exception catch (e) {
+      print('Error al subir la imagen: $e');
     }
   }
 

@@ -1,15 +1,16 @@
-import 'package:cloudinary_flutter/cloudinary_object.dart';
+//import 'package:cloudinary_flutter/cloudinary_object.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mentorme/src/services/firebase_options.dart';
 import 'package:mentorme/src/pages/welcome_page.dart';
 import 'package:mentorme/src/routes/routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mentorme/src/utils/cartnotifier.dart';
 import 'package:provider/provider.dart';
-import 'package:cloudinary_flutter/cloudinary_context.dart';
-import 'package:cloudinary_flutter/image/cld_image.dart';
-import 'package:cloudinary_url_gen/cloudinary.dart';
+// import 'package:cloudinary_flutter/cloudinary_context.dart';
+// import 'package:cloudinary_flutter/image/cld_image.dart';
+// import 'package:cloudinary_url_gen/cloudinary.dart';
 
 
 void main() async {
@@ -18,8 +19,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  Cloudinary cloudinary= CloudinaryObject.fromCloudName(cloudName: "dci0bezbf");
+  await dotenv.load(fileName: ".env");
+  //Cloudinary cloudinary= CloudinaryObject.fromCloudName(cloudName: "dci0bezbf");
 
   runApp(
     ChangeNotifierProvider(
