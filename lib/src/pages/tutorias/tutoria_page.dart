@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/materia.dart';
@@ -209,7 +211,7 @@ class _TutoriaPageState extends State<TutoriaPage> {
                               child: Column(
                                 children: [
                                   CircleAvatar(
-                                    backgroundImage:url!=null || url!.isNotEmpty? NetworkImage(url): const AssetImage('assets/images/user.png'),
+                                    backgroundImage:url!=null || url!.isNotEmpty? MemoryImage(base64Decode(url)): const AssetImage('assets/images/user.png'),
                                   ),
                                   Text(
                                     user !=null

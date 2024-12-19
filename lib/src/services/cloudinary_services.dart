@@ -8,7 +8,7 @@ Future<String> upload_img(File img) async {
   try {
     String cloudname = dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
     if (cloudname.isEmpty) throw 'CLOUDINARY_CLOUD_NAME no configurado en el .env';
-
+    
     var uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudname/raw/upload');
     var request = http.MultipartRequest('POST', uri);
 

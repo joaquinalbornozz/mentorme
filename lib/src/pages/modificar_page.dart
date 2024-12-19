@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +10,7 @@ import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image/image.dart' as img;
 
 class ModificarPerfilPage extends StatefulWidget {
   const ModificarPerfilPage({super.key});
@@ -69,8 +70,9 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
           _horarios = _horariosController.text;
           _password = _passwordController.text;
           _descripcion = _descripcionController.text;
-          if (u.fotoperfil != null || u.fotoperfil!.isNotEmpty)
+          if (u.fotoperfil != null && u.fotoperfil!.isNotEmpty) {
             _urlfoto = u.fotoperfil!;
+          }
         });
       } else {
         Navigator.pushNamed(context, 'welcome');
@@ -301,7 +303,6 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
 
     return TextField(
       controller: _horariosController,
-      keyboardType: TextInputType.datetime,
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
         hintText: 'Horario (ej. 09:00 AM - 10:00 AM)',
@@ -338,8 +339,8 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
         backgroundImage: _selectedImage != null
             ? FileImage(_selectedImage!)
             : _urlfoto.isNotEmpty
-                ? NetworkImage(_urlfoto)
-                : null,
+                ? MemoryImage(base64Decode(_urlfoto))
+                : const AssetImage('assets/images/user.png'),
         child: _selectedImage == null
             ? const Icon(
                 Icons.camera_alt,
@@ -391,8 +392,9 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
       maxLines: 6,
       decoration: const InputDecoration(
         labelText: 'Descripción',
-        hintText:
+        helperText:
             'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
+        hintText: 'Una descripcion breve sobre ti',
         border: OutlineInputBorder(),
         alignLabelWithHint: true,
       ),
@@ -421,6 +423,7 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     );
   }
 
+/*
   String extractPublicId(String imageUrl) {
     final regex = RegExp(r'upload\/(?:v\d+\/)?(.+)\.\w+$');
     final match = regex.firstMatch(imageUrl);
@@ -469,9 +472,31 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
       return false;
     }
   }
-
+*/
   Future<void> uploadimg() async {
-    if(_urlfoto.isNotEmpty){
+    try {
+      Uint8List? bytes;
+
+      if (_selectedImage != null) {
+        bytes = await _selectedImage!.readAsBytes();
+
+        img.Image originalImage = img.decodeImage(bytes)!;
+        img.Image resizedImage = img.copyResize(originalImage, width: 300);
+        setState(() {
+          _urlfoto = base64Encode(img.encodeJpg(resizedImage));
+        });
+      } else {
+        setState(() {
+          _urlfoto = '';
+        });
+      }
+    } catch (e) {
+      print('Error al convertir la imagen a Base64: $e');
+      setState(() {
+        _urlfoto = '';
+      });
+    }
+    /* if(_urlfoto.isNotEmpty){
       if (await deleteImg()==false){
         print("Error al eliminar la imagen");
         return;
@@ -479,7 +504,7 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
     }
     var request = http.MultipartRequest('POST',
         Uri.parse('https://api.cloudinary.com/v1_1/dci0bezbf/image/upload'))
-      ..fields['upload_preset'] = 'xurkaexw'
+      ..fields['upload_preset'] = 'mentorme'
       ..files
           .add(await http.MultipartFile.fromPath('file', _selectedImage!.path));
     http.StreamedResponse response = await request.send();
@@ -493,7 +518,7 @@ class _ModificarPerfilPageState extends State<ModificarPerfilPage> {
       });
     } else {
       print(response.reasonPhrase);
-    }
+    } */
   }
 
   void _validateAndShowConfirmationDialog(BuildContext context) {

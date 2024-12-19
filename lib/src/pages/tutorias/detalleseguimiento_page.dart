@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/tutoria.dart';
@@ -56,9 +58,9 @@ class _DetalleSeguimientoPageState extends State<DetalleSeguimientoPage> {
             CircleAvatar(
               backgroundImage: widget.profesor.fotoperfil != null &&
                       widget.profesor.fotoperfil!.isNotEmpty
-                  ? NetworkImage(widget.profesor.fotoperfil!)
+                  ? MemoryImage(base64Decode(widget.profesor.fotoperfil!))
                   : const AssetImage("assets/images/user.png"),
-              radius: 50,
+              radius: 80,
             ),
             Text(
                 widget.profesor.nombre,

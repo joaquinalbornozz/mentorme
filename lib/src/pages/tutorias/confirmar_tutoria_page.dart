@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
@@ -77,7 +79,7 @@ class _ConfirmarTutoriaPageState extends State<ConfirmarTutoriaPage> {
                             children: [
                               CircleAvatar(
                                 backgroundImage: url != null
-                                    ? NetworkImage(url)
+                                    ? MemoryImage(base64Decode(url))
                                     : const AssetImage(
                                         'assets/images/user.png'),
                                 radius: Responsive.of(context).wp(50),

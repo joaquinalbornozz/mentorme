@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:mentorme/src/models/user.dart';
+import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,6 +15,8 @@ class PerfilPage extends StatefulWidget {
 
 class _PerfilPageState extends State<PerfilPage> {
   String? rol;
+  String? foto;
+  String? userid;
 
   @override
   void initState() {
@@ -18,11 +24,29 @@ class _PerfilPageState extends State<PerfilPage> {
     _getUserRole();
   }
 
+  Future<void> _getFoto() async {
+    final User? user = await FirebaseServices.instance.getUserById(userid!);
+    if (user != null) {
+      setState(() {
+        foto = user.fotoperfil;
+      });
+    } else {
+      Navigator.pushReplacementNamed(context, 'welcome');
+    }
+  }
+
   Future<void> _getUserRole() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       rol = prefs.getString('rol');
+      userid = prefs.getString('userid');
     });
+    if (rol == null || userid == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, 'welcome');
+      });
+    }
+    await _getFoto();
   }
 
   void _navigateToPage(String pageName) {
@@ -104,6 +128,14 @@ class _PerfilPageState extends State<PerfilPage> {
         padding: EdgeInsets.all(responsive.dp(2.5)),
         child: ListView(
           children: [
+            Center(
+                child: CircleAvatar(
+              radius: responsive.wp(50),
+              foregroundColor: Colors.amber[800],
+              backgroundImage: foto != null && foto!.isNotEmpty
+                  ? MemoryImage(base64Decode(foto!))
+                  : const AssetImage('assets/images/user.png'),
+            )),
             if (rol == 'Alumno') ...alumnoOptions,
             if (rol == 'Profesor') ...profesorOptions,
             ...commonOptions,
@@ -112,7 +144,8 @@ class _PerfilPageState extends State<PerfilPage> {
       ),
     );
   }
-  void _showConfirmationDialog(){
+
+  void _showConfirmationDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -130,7 +163,7 @@ class _PerfilPageState extends State<PerfilPage> {
               child: const Text('Confirmar'),
               onPressed: () async {
                 _cerrarSesion();
-                Navigator.pushReplacementNamed(context, '/'); 
+                Navigator.pushReplacementNamed(context, '/');
               },
             ),
           ],

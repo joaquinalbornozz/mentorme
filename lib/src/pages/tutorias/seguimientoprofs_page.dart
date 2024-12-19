@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/pages/tutorias/detalleseguimiento_page.dart';
@@ -8,10 +10,12 @@ class SeguimientoPorProfesorPage extends StatefulWidget {
   const SeguimientoPorProfesorPage({super.key});
 
   @override
-  State<SeguimientoPorProfesorPage> createState() => _SeguimientoPorProfesorPageState();
+  State<SeguimientoPorProfesorPage> createState() =>
+      _SeguimientoPorProfesorPageState();
 }
 
-class _SeguimientoPorProfesorPageState extends State<SeguimientoPorProfesorPage> {
+class _SeguimientoPorProfesorPageState
+    extends State<SeguimientoPorProfesorPage> {
   List<User> profesores = [];
 
   @override
@@ -42,14 +46,20 @@ class _SeguimientoPorProfesorPageState extends State<SeguimientoPorProfesorPage>
           return Card(
             child: Row(
               children: [
-                CircleAvatar(radius: 10, backgroundImage: profesor.fotoperfil!=null && profesor.fotoperfil!.isNotEmpty? NetworkImage(profesor.fotoperfil!):const AssetImage("assets/images/user.png")),
+                CircleAvatar(
+                    radius: 10,
+                    backgroundImage: profesor.fotoperfil != null &&
+                            profesor.fotoperfil!.isNotEmpty
+                        ? MemoryImage(base64Decode(profesor.fotoperfil!))
+                        : const AssetImage("assets/images/user.png")),
                 ListTile(
                   title: Text(profesor.nombre),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DetalleSeguimientoPage(profesor: profesor),
+                        builder: (context) =>
+                            DetalleSeguimientoPage(profesor: profesor),
                       ),
                     );
                   },

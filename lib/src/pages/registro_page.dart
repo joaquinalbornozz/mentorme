@@ -1,11 +1,14 @@
 //import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
-import 'package:cloudinary/cloudinary.dart';
+//import 'package:cloudinary/cloudinary.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // Para formatear fechas.
-import 'package:mentorme/src/services/cloudinary_services.dart';
+//import 'package:mentorme/src/services/cloudinary_services.dart';
 import 'package:mentorme/src/services/firebase_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -90,6 +93,7 @@ class _RegistroPageState extends State<RegistroPage> {
             children: [
               Center(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center ,
                   children: [
                     Text(
                       '¡Bienvenido a MentorMe!',
@@ -123,11 +127,11 @@ class _RegistroPageState extends State<RegistroPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              __descripcion(),
+              _nombreInput(),
               const SizedBox(height: 20),
               _emailInput(),
               const SizedBox(height: 20),
-              _nombreInput(),
+              __descripcion(),
               const SizedBox(height: 20),
               _fechaNacimientoInput(context),
               const SizedBox(height: 20),
@@ -387,7 +391,7 @@ class _RegistroPageState extends State<RegistroPage> {
       controller: _horariosController,
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0)),
-        hintText: 'Horario (ej. 10:00 AM)',
+        hintText: 'Horario (ej. 10:00 AM - 12:00 AM)',
         labelText: 'Horario de Tutoría',
         suffixIcon: horarioRegExp.hasMatch(_horarios)
             ? const Icon(Icons.check_circle, color: Colors.green)
@@ -472,8 +476,9 @@ class _RegistroPageState extends State<RegistroPage> {
       maxLines: 6,
       decoration: const InputDecoration(
           labelText: 'Descripción',
-          hintText:
+          helperText:
               'Una descripcion a cerca de vos. Como tus estudios, carrera actual, año de cursado, preferencias, etc. ',
+          hintText: 'Una descripcion breve sobre ti',
           border: OutlineInputBorder(),
           alignLabelWithHint: true,
           icon: Icon(Icons.assignment, color: Color(0xFF4B5563))),
@@ -553,12 +558,36 @@ class _RegistroPageState extends State<RegistroPage> {
 
   Future<void> uploadimg() async {
     try {
-      final url= await upload_img(_selectedImage!);
+      try {
+        Uint8List? bytes;
+
+        if (_selectedImage != null) {
+          bytes = await _selectedImage!.readAsBytes();
+
+          img.Image originalImage = img.decodeImage(bytes)!;
+          img.Image resizedImage = img.copyResize(originalImage,
+              width: 300); 
+          setState(() {
+            _urlfoto = base64Encode(img.encodeJpg(resizedImage));
+          });
+        } else {
+          setState(() {
+            _urlfoto = '';
+          });
+        }
+      } catch (e) {
+        print('Error al convertir la imagen a Base64: $e');
+        setState(() {
+          _urlfoto = '';
+        });
+      }
+
+      /*final url= await upload_img(_selectedImage!);
       if(url.isNotEmpty){
         setState(() {
           _urlfoto = url;
         });
-      }
+      }*/
       /*final cloudinary=Cloudinary.unsignedConfig(cloudName: "dci0bezbf");
       
       final bytes = _selectedImage!.readAsBytesSync();
