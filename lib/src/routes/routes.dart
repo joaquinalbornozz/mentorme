@@ -5,6 +5,7 @@ import 'package:mentorme/src/pages/modificar_page.dart';
 import 'package:mentorme/src/pages/tutorias/asignar_page.dart';
 import 'package:mentorme/src/pages/tutorias/estadisticas_page.dart';
 import 'package:mentorme/src/pages/tutorias/historial_page.dart';
+import 'package:mentorme/src/pages/tutorias/profesores_page.dart';
 import 'package:mentorme/src/pages/tutorias/requesttutoria.dart';
 import 'package:mentorme/src/pages/tutorias/seguimientoprofs_page.dart';
 import 'package:mentorme/src/pages/welcome_page.dart';
@@ -25,6 +26,7 @@ Map<String, WidgetBuilder> getAplicationRoutes() {
     'asignar': (BuildContext context) => const AsignarTareasPage(),
     'modificarperfil':(BuildContext context) => const ModificarPerfilPage(),
     'estadistica':(BuildContext context) =>  const EstadisticasPage(),
-    'seguimiento': (BuildContext context) => const SeguimientoPorProfesorPage()
+    'seguimiento': (BuildContext context) => const SeguimientoPorProfesorPage(),
+    'profesores': (BuildContext context) => const ProfesoresPage()
   };
 }

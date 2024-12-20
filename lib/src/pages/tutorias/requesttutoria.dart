@@ -7,7 +7,14 @@ import 'package:mentorme/src/utils/responsive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NuevaTutoriaPage extends StatefulWidget {
-  const NuevaTutoriaPage({super.key});
+  final String? profesorId;
+  final String? materiaId;
+
+  const NuevaTutoriaPage({
+    super.key,
+    this.profesorId,
+    this.materiaId,
+  });
 
   @override
   _NuevaTutoriaPageState createState() => _NuevaTutoriaPageState();
@@ -20,17 +27,25 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
 
-  // Future para obtener todas las materias
+  @override
+  void initState() {
+    super.initState();
+    if (widget.profesorId != null) {
+      _profesorSeleccionadoId = widget.profesorId;
+    }
+    if (widget.materiaId != null) {
+      _materiaSeleccionadaId = widget.materiaId;
+    }
+  }
+
   Future<List<Materia>> _getMaterias() async {
     return await FirebaseServices.instance.getAllMateriasFB();
   }
 
-  // Future para obtener los profesores por materia
   Future<List<User>> _getProfesoresPorMateria(String idMateria) async {
     return await FirebaseServices.instance.getProfesoresbyMateria(idMateria);
   }
 
-  // Función para seleccionar una fecha
   Future<void> _seleccionarFecha(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -66,6 +81,7 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
+              if(widget.materiaId==null) ...[
               const Text(
                 'Selecciona una Materia',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -102,7 +118,8 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
                     return const Text('No hay materias disponibles');
                   }
                 },
-              ),
+              )],
+              if(widget.profesorId==null) ...[
               const SizedBox(height: 20),
 
               const Text(
@@ -142,7 +159,7 @@ class _NuevaTutoriaPageState extends State<NuevaTutoriaPage> {
                       return const Text('No hay profesores disponibles');
                     }
                   },
-                ),
+                )],
               const SizedBox(height: 20),
 
               const Text(

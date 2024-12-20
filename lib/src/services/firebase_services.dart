@@ -149,6 +149,14 @@ class FirebaseServices {
     return profesores;
   }
 
+  Future<List<User>>getProfesores() async {
+    QuerySnapshot snapshot= await users.where('rol',isEqualTo: 'Profesor').get();
+    if(snapshot.docs.isEmpty)return [];
+    List<User> profesores = snapshot.docs.map((doc) {
+      final a=doc.data() as Map<String, dynamic>;a['id']=doc.id; return User.fromMap(a);
+    }).toList();
+    return profesores;
+  }
   //------------Tutorias ------------
   Future<List<Map<String, dynamic>>> getTutorias(String rol, String id) async {
     List<Map<String, dynamic>> t = [];
