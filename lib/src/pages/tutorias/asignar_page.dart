@@ -31,7 +31,7 @@ class _AsignarTareasPageState extends State<AsignarTareasPage> {
 
     final List<Map<String,dynamic>> allTutorias = await FirebaseServices.instance.getTutorias('Profesor',idProfesor!);
     final List<Map<String,dynamic>> pendientes = allTutorias
-        .where((tutoria) => !tutoria['confirmada'])
+        .where((tutoria) => tutoria['confirmada'])
         .where((tutoria)=> DateTime.parse(tutoria['dia']).isBefore(DateTime.now()) && (tutoria['devolucion']==null || tutoria['notasSeguimiento']==null || tutoria['tareasAsignadas']==null))
         .toList();
     for (var tutoria in pendientes) {
@@ -93,26 +93,13 @@ class _AsignarTareasPageState extends State<AsignarTareasPage> {
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {
-                                      final String resultado= await Navigator.push(
+                                      await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => TutoriaPage(tutoria: tutoria['tutoria']),
                                         ),
                                       );
                                       fetchTutorias();
-                                      if(resultado=='confirmada'){
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                              content:
-                                                  Text('La Tutoria fue Confirmada')),
-                                        );
-                                      }else{
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                              content:
-                                                  Text('La Tutoria fue rechazada')),
-                                        );
-                                      }
                                     },
                                   ),
                                 );

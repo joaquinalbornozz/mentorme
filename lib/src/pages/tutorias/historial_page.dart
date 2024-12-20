@@ -16,9 +16,6 @@ class HistorialPage extends StatefulWidget {
 
 class _HistorialPageState extends State<HistorialPage> {
   List<Map<String,dynamic>> tutorias = [];
-  List<String> nombresAlu=[];
-  List<String> nombresProf=[];
-  List<String> materias=[];
   String? rol; // Role can be either 'Alumno' or 'Profesor'
   String? userName; // Either the student or professor name
   String? userid;
@@ -103,7 +100,7 @@ class _HistorialPageState extends State<HistorialPage> {
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   
-                                  subtitle:Text('Materia: ${materias[index]}\n''Fecha: ${tutoria['tutoria'].dia.toLocal()}'),
+                                  subtitle:Text('Materia: ${tutoria['nombreMateria']}\n''Fecha: ${tutoria['tutoria'].dia.toLocal()}'),
                                   onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(

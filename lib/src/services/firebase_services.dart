@@ -142,7 +142,7 @@ class FirebaseServices {
     QuerySnapshot snapshotUsers =
         await users.where(FieldPath.documentId, whereIn: p).get();
     List<User> profesores = snapshotUsers.docs.map((doc) {
-      return User.fromMap(doc.data() as Map<String, dynamic>);
+      final a=doc.data() as Map<String, dynamic>;a['id']=doc.id; return User.fromMap(a);
     }).toList();
     profesores.sort((a, b) => a.nombre.compareTo(b.nombre));
 

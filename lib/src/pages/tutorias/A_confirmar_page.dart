@@ -105,7 +105,7 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
                                               content: Text(
                                                   'La Tutoria fue Confirmada')),
                                         );
-                                      } else {
+                                      } else if(resultado=='rechazada'){
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           const SnackBar(
