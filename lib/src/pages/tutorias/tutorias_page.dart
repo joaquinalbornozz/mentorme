@@ -79,122 +79,127 @@ class _TutoriasPageState extends State<TutoriasPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  final bool isAlumno = rol == 'Alumno';
-  final responsive= Responsive(context);
-  return Scaffold(
-    body: isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView( // Permite desplazamiento
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '¡Bienvenido, $userName!',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) {
+    final bool isAlumno = rol == 'Alumno';
+    final responsive = Responsive(context);
+    return Scaffold(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              // Permite desplazamiento
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Bienvenido, $userName!',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Wrap( // Cambiado de Row a Wrap para evitar overflow
-                      spacing: 16, // Espaciado horizontal
-                      runSpacing: 16, // Espaciado vertical
-                      alignment: WrapAlignment.center,
-                      children: isAlumno
-                          ? [
-                              _buildBotonAccion(context,
-                                  icon: Icons.person_search,
-                                  title: 'Profesores',
-                                  color: Colors.white,
-                                  onPressed: () {
-                                Navigator.pushNamed(context, 'profesores');
-                              }),
-                              _buildBotonAccion(context,
-                                  icon: Icons.school_outlined,
-                                  title: 'Seguimiento por\n Profesor',
-                                  color: Colors.white,
-                                  onPressed: () {
-                                Navigator.pushNamed(context, 'seguimiento');
-                              }),
-                            ]
-                          : [
-                              _buildBotonAccion(context,
-                                  icon: Icons.assignment,
-                                  title: 'Asignar y calificar Tareas',
-                                  color: Colors.white,
-                                  onPressed: () {
-                                Navigator.pushNamed(context, 'asignar');
-                              }),
-                            ],
+                    const SizedBox(height: 20),
+                    Center(
+                      child: Wrap(
+                        // Cambiado de Row a Wrap para evitar overflow
+                        spacing: 16, // Espaciado horizontal
+                        runSpacing: 16, // Espaciado vertical
+                        alignment: WrapAlignment.center,
+                        children: isAlumno
+                            ? [
+                                _buildBotonAccion(context,
+                                    icon: Icons.person_search,
+                                    title: 'Profesores',
+                                    color: Colors.white, onPressed: () {
+                                  Navigator.pushNamed(context, 'profesores');
+                                }),
+                                _buildBotonAccion(context,
+                                    icon: Icons.school_outlined,
+                                    title: 'Seguimiento por\n Profesor',
+                                    color: Colors.white, onPressed: () {
+                                  Navigator.pushNamed(context, 'seguimiento');
+                                }),
+                              ]
+                            : [
+                                _buildBotonAccion(context,
+                                    icon: Icons.assignment,
+                                    title: 'Asignar y\n calificar Tareas',
+                                    color: Colors.white, onPressed: () {
+                                  Navigator.pushNamed(context, 'asignar');
+                                }),
+                                _buildBotonAccion(context,
+                                    icon: Icons.book,
+                                    title: 'Agregar Materias',
+                                    color: Colors.white,
+                                    onPressed: (){
+                                      Navigator.pushNamed(context, 'materiaprofesor');
+                                    })
+                              ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Proximas Tutorias',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Proximas Tutorias',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  tutorias.isEmpty
-                      ? const Text(
-                          'No tienes tutorías pendientes.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        )
-                      : SizedBox(
-                          height: responsive.hp(60), // Ajuste dinámico
-                          child: ListView.builder(
-                            itemCount: tutorias.length,
-                            itemBuilder: (context, index) {
-                              final tutoria = tutorias[index];
-                              final formattedDate = DateFormat('dd/MM/yyyy')
-                                  .format(tutoria['tutoria'].dia);
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 10),
-                                child: ListTile(
-                                  title: Text(
-                                    isAlumno
-                                        ? 'Profesor: ${tutoria['nombrePro']}'
-                                        : 'Alumno: ${tutoria['nombreAlu']}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Text(
-                                    'Materia: ${tutoria['nombreMateria']}\nFecha: $formattedDate',
-                                  ),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => TutoriaPage(
-                                          tutoria: tutoria['tutoria']),
+                    const SizedBox(height: 15),
+                    tutorias.isEmpty
+                        ? const Text(
+                            'No tienes tutorías pendientes.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          )
+                        : SizedBox(
+                            height: responsive.hp(60), // Ajuste dinámico
+                            child: ListView.builder(
+                              itemCount: tutorias.length,
+                              itemBuilder: (context, index) {
+                                final tutoria = tutorias[index];
+                                final formattedDate = DateFormat('dd/MM/yyyy')
+                                    .format(tutoria['tutoria'].dia);
+                                return Card(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: ListTile(
+                                    title: Text(
+                                      isAlumno
+                                          ? 'Profesor: ${tutoria['nombrePro']}'
+                                          : 'Alumno: ${tutoria['nombreAlu']}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Text(
+                                      'Materia: ${tutoria['nombreMateria']}\nFecha: $formattedDate',
+                                    ),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TutoriaPage(
+                                            tutoria: tutoria['tutoria']),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-    floatingActionButton: isAlumno
-        ? FloatingActionButton(
-            onPressed: () {
-              Navigator.pushNamed(context, 'requestTutoria');
-            },
-            child: const Icon(Icons.add),
-          )
-        : null,
-  );
-}
-
+      floatingActionButton: isAlumno
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'requestTutoria');
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
 
   Widget _buildBotonAccion(
     BuildContext context, {
@@ -204,38 +209,37 @@ Widget build(BuildContext context) {
     required VoidCallback onPressed,
   }) {
     return LayoutBuilder(
-  builder: (context, constraints) {
-    final buttonSize = constraints.maxWidth / 3; 
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        padding: const EdgeInsets.all(16.0),
-        backgroundColor: color,
-        minimumSize: Size(buttonSize, buttonSize),
-        
-      ),
-      onPressed: onPressed,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 32, color: Colors.amber[800]),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.amber[800],
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+      builder: (context, constraints) {
+        final buttonSize = constraints.maxWidth / 3;
+        return ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
             ),
-            textAlign: TextAlign.center,
+            padding: const EdgeInsets.all(16.0),
+            backgroundColor: color,
+            minimumSize: Size(buttonSize, buttonSize),
           ),
-        ],
-      ),
+          onPressed: onPressed,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 32, color: Colors.amber[800]),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.amber[800],
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
     );
-  },
-);
   }
 }

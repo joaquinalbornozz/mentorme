@@ -157,6 +157,27 @@ class FirebaseServices {
     }).toList();
     return profesores;
   }
+
+  Future<List<String>> getMateriasDelProfesor(String id) async {
+    try {
+      final doc = await users.doc(id).get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data.containsKey('idMateria')) {
+          return List<String>.from(data['idMateria']);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error al obtener las materias del profesor: $e');
+      return [];
+    }
+  }
+
+  Future<void> updateMateria_Profesor(String id, List<String> idMateria) async {
+    await users.doc(id).update({'idMateria':idMateria});
+  }
   //------------Tutorias ------------
   Future<List<Map<String, dynamic>>> getTutorias(String rol, String id) async {
     List<Map<String, dynamic>> t = [];

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mentorme/src/pages/admin/crear_materia_page.dart';
 import 'package:mentorme/src/pages/admin/listar_materias_page.dart';
 import 'package:mentorme/src/pages/modificar_page.dart';
+import 'package:mentorme/src/pages/tutorias/agregarmaterias_page.dart';
 import 'package:mentorme/src/pages/tutorias/asignar_page.dart';
 import 'package:mentorme/src/pages/tutorias/estadisticas_page.dart';
 import 'package:mentorme/src/pages/tutorias/historial_page.dart';
@@ -27,6 +28,7 @@ Map<String, WidgetBuilder> getAplicationRoutes() {
     'modificarperfil':(BuildContext context) => const ModificarPerfilPage(),
     'estadistica':(BuildContext context) =>  const EstadisticasPage(),
     'seguimiento': (BuildContext context) => const SeguimientoPorProfesorPage(),
-    'profesores': (BuildContext context) => const ProfesoresPage()
+    'profesores': (BuildContext context) => const ProfesoresPage(),
+    'materiaprofesor':(BuildContext context) => const AgregarMateriasPage()
   };
 }
