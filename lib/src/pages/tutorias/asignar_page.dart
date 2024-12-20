@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
@@ -89,7 +90,7 @@ class _AsignarTareasPageState extends State<AsignarTareasPage> {
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text(
-                                      'Materia: ${tutoria['nombreMateria']} \n Fecha: ${tutoria['tutoria'].dia.toLocal()}',
+                                      'Materia: ${tutoria['nombreMateria']} \n Fecha: ${DateFormat('dd/MM/yyyy').format(tutoria['tutoria'].dia)}',
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {

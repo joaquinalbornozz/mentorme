@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
@@ -39,7 +40,7 @@ class _HistorialPageState extends State<HistorialPage> {
 
     final List<Map<String,dynamic>> allTutorias = await FirebaseServices.instance.getTutorias(rol!, userid!);
     final List<Map<String,dynamic>> confirmedTutorias = allTutorias.where((tutoria) {return tutoria['confirmada'] && DateTime.parse(tutoria['dia']).isBefore(DateTime.now()); }).toList();
-
+    confirmedTutorias.sort((a,b)=>DateTime.parse(a['dia']).compareTo(DateTime.parse(b['dia'])));
     for (var tutoria in confirmedTutorias) {
       tutoria['tutoria'] =Tutoria.fromMap(tutoria);
       if (rol=='Profesor') {
@@ -100,7 +101,8 @@ class _HistorialPageState extends State<HistorialPage> {
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                   
-                                  subtitle:Text('Materia: ${tutoria['nombreMateria']}\n''Fecha: ${tutoria['tutoria'].dia.toLocal()}'),
+                                  subtitle:Text('Materia: ${tutoria['nombreMateria']}\n''Fecha: ${DateFormat('dd/MM/yyyy')
+                                    .format(tutoria['tutoria'].dia)}'),
                                   onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(

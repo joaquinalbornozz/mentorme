@@ -32,6 +32,7 @@ class _DetalleSeguimientoPageState extends State<DetalleSeguimientoPage> {
 
     final tutorias =
         await db.getTutoriasPorProfesorYAlumno(widget.profesor.id!, alumnoId!);
+        tutorias.sort((a,b)=>a.dia.compareTo(b.dia));
     setState(() {
       tutoriasConProfesor = tutorias;
       promedioCalificacion = _calcularPromedio(tutorias);

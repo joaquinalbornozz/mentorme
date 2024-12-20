@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
 import 'package:mentorme/src/pages/tutorias/confirmar_tutoria_page.dart';
@@ -84,7 +85,7 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
                                           fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text(
-                                      'Fecha: ${tutoria['tutoria'].dia.toLocal()}',
+                                      'Fecha: ${DateFormat('dd/MM/yyyy').format(tutoria['tutoria'].dia)}',
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {

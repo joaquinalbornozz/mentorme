@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
@@ -92,7 +93,7 @@ class _PendientesPageState extends State<PendientesPage> {
                                       style: const TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Text('Materia: ${tutoria['nombreMateria']}\n'
-                                        'Fecha: ${tutoria['tutoria'].dia.toLocal()}'),
+                                        'Fecha: ${DateFormat('dd/MM/yyyy').format(tutoria['tutoria'].dia)}'),
                                   onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(

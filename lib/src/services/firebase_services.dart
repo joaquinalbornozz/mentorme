@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+//import 'package:intl/intl.dart';
 import 'package:mentorme/src/models/materia.dart';
-import 'package:mentorme/src/models/notificacion.dart';
+//import 'package:mentorme/src/models/notificacion.dart';
 import 'package:mentorme/src/models/tutoria.dart';
 import 'package:mentorme/src/models/user.dart';
 
@@ -11,15 +11,14 @@ class FirebaseServices {
   final CollectionReference users;
   final CollectionReference materias;
   final CollectionReference tutorias;
-  final CollectionReference notificaciones;
+  //final CollectionReference notificaciones;
 
   // Constructor
   FirebaseServices()
       : users = FirebaseFirestore.instance.collection("Users"),
         materias = FirebaseFirestore.instance.collection("Materias"),
-        tutorias = FirebaseFirestore.instance.collection("Tutorias"),
-        notificaciones =
-            FirebaseFirestore.instance.collection("Notificaciones");
+        tutorias = FirebaseFirestore.instance.collection("Tutorias");
+        //notificaciones =FirebaseFirestore.instance.collection("Notificaciones");
 
   // ------------Materias ------------
   Future<List<Materia>> getAllMateriasFB() async {
@@ -197,7 +196,7 @@ class FirebaseServices {
 
   Future<void> deleteTutoria(Tutoria t) async {
     await tutorias.doc(t.id).delete();
-    User? profesor = await instance.getUserById(t.idProfesor);
+    /* User? profesor = await instance.getUserById(t.idProfesor);
     Materia? materia = await instance.getMateriaById(t.idMateria);
     Notificacion n = Notificacion(
         titulo:
@@ -206,7 +205,7 @@ class FirebaseServices {
             "${profesor?.nombre ?? "El/La profesor/a"} rechazo la tutoria ${materia?.nombre != null ? "de ${materia!.nombre}" : ''} propuesta para el dia ${DateFormat("dd/MM/yyyy").format(t.dia)}. Contactate con tu profesor(a) ${profesor?.telefono != null ? "a número su telefono ${profesor?.telefono}" : ''} para saber el motivo o solicita una tutoria con otro/a profesor(a).",
         idUsuario: t.idAlumno,
         timestamp: DateTime.timestamp());
-    await instance.insertNotificacion(n);
+    await instance.insertNotificacion(n); */
   }
 
   Future<void> insertTutoria(Tutoria t) async {
@@ -228,7 +227,7 @@ class FirebaseServices {
   }
 
   // ------------Notificaciones ------------
-  Future<void> insertNotificacion(Notificacion n) async {
+  /* Future<void> insertNotificacion(Notificacion n) async {
     await notificaciones.add(n.toMap());
-  }
+  } */
 }
