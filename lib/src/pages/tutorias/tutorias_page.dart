@@ -15,9 +15,9 @@ class TutoriasPage extends StatefulWidget {
 }
 
 class _TutoriasPageState extends State<TutoriasPage> {
-  List<Map<String,dynamic>> tutorias = [];
-  String? rol; 
-  String? userName; 
+  List<Map<String, dynamic>> tutorias = [];
+  String? rol;
+  String? userName;
   String? userid;
   bool isLoading = true;
 
@@ -28,53 +28,55 @@ class _TutoriasPageState extends State<TutoriasPage> {
   }
 
   Future<void> fetchTutorias() async {
-  try {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final FirebaseServices db = FirebaseServices.instance;
-    rol = prefs.getString('rol');
-    userName = prefs.getString('nombre');
-    userid = prefs.getString('userid');
-    if (userid == null) {
-      Navigator.pushNamed(context, 'welcome');
-      return;
-    }
-
-    final allTutorias = await db.getTutorias(rol!, userid!);
-    final confirmedTutorias = allTutorias.where((tutoria) {
-      return tutoria['confirmada'] && DateTime.parse(tutoria['dia']).isAfter(DateTime.now());
-    }).toList();
-
-    for (var tutoria in confirmedTutorias) {
-      tutoria['tutoria'] = Tutoria.fromMap(tutoria);
-      if (rol == 'Profesor') {
-        User? userAlu = await db.getUserById(tutoria['idAlumno']);
-        tutoria['nombreAlu'] = userAlu?.nombre ?? "Desconocido";
-      } else {
-        User? userPro = await db.getUserById(tutoria['idProfesor']);
-        Materia? materia = await db.getMateriaById(tutoria['idMateria']);
-        tutoria['nombrePro'] = userPro?.nombre ?? "Desconocido";
-        tutoria['nombreMateria'] = materia?.nombre ?? "Materia Desconocida";
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final FirebaseServices db = FirebaseServices.instance;
+      rol = prefs.getString('rol');
+      userName = prefs.getString('nombre');
+      userid = prefs.getString('userid');
+      
+      if (rol == null || userid == null) {
+        Navigator.pushNamed(context, 'welcome');
+        return;
       }
+
+      final allTutorias = await db.getTutorias(rol!, userid!);
+      final confirmedTutorias = allTutorias.where((tutoria) {
+        return tutoria['confirmada'] && DateTime.parse(tutoria['dia']).isAfter(DateTime.now());
+      }).toList();
+
+      for (var tutoria in confirmedTutorias) {
+        tutoria['tutoria'] = Tutoria.fromMap(tutoria);
+        if (rol == 'Profesor') {
+          User? userAlu = await db.getUserById(tutoria['idAlumno']);
+          tutoria['nombreAlu'] = userAlu?.nombre ?? "Desconocido";
+        } else {
+          User? userPro = await db.getUserById(tutoria['idProfesor']);
+          tutoria['nombrePro'] = userPro?.nombre ?? "Desconocido";
+        }
+        Materia? materia = await db.getMateriaById(tutoria['idMateria']);
+        tutoria['nombreMateria'] = materia != null ? materia.nombre : "Materia Desconocida";
+        print(materia!=null ? materia.nombre: 'no se encuentra la materia');
+      }
+
+      setState(() {
+        tutorias = confirmedTutorias;
+      });
+    } catch (e) {
+      print("Error al cargar las tutorías: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ocurrió un error al cargar las tutorías')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
-
-    setState(() {
-      tutorias = confirmedTutorias;
-      isLoading = false;
-    });
-  } catch (e) {
-    print("Error al cargar las tutorías: $e");
-    setState(() {
-      isLoading = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ocurrió un error al cargar las tutorías')),
-    );
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
+    final bool isAlumno = rol == 'Alumno';
     return Scaffold(
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -89,30 +91,36 @@ class _TutoriasPageState extends State<TutoriasPage> {
                   ),
                   const SizedBox(height: 20),
                   tutorias.isEmpty
-                      ? const Text('No tienes tutorías pendientes.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey))
+                      ? const Text(
+                          'No tienes tutorías pendientes.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        )
                       : Expanded(
                           child: ListView.builder(
                             itemCount: tutorias.length,
                             itemBuilder: (context, index) {
                               final tutoria = tutorias[index];
-                              final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(tutoria['tutoria'].dia.toDate());
+                              final formattedDate = DateFormat('dd/MM/yyyy').format(
+                                tutoria['tutoria'].dia,
+                              );
                               return Card(
                                 margin: const EdgeInsets.symmetric(vertical: 10),
                                 child: ListTile(
                                   title: Text(
-                                    rol == 'Profesor'
-                                        ? 'Alumno: ${tutoria['nombreAlu']}' 
-                                        : 'Profesor: ${tutoria['nombrePro']}', 
+                                    isAlumno
+                                        ? 'Profesor: ${tutoria['nombrePro']}'
+                                        : 'Alumno: ${tutoria['nombreAlu']}',
                                     style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
-                                  
-                                  subtitle: Text('Materia: ${tutoria['nombreMateria']}\n''Fecha: $formattedDate'),
+                                  subtitle: Text(
+                                    'Materia: ${tutoria['nombreMateria']}\nFecha: $formattedDate',
+                                  ),
                                   onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => TutoriaPage(tutoria: tutoria['tutoria']),
-                                        ),
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          TutoriaPage(tutoria: tutoria['tutoria']),
+                                    ),
                                   ),
                                 ),
                               );
@@ -122,13 +130,14 @@ class _TutoriasPageState extends State<TutoriasPage> {
                 ],
               ),
             ),
-      floatingActionButton: rol =='Alumno'?FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, 'requestTutoria'); 
-        },
-        child: const Icon(Icons.add),
-      ):null,
+      floatingActionButton: isAlumno
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'requestTutoria');
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
-
 }

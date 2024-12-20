@@ -17,6 +17,7 @@ class SeguimientoPorProfesorPage extends StatefulWidget {
 class _SeguimientoPorProfesorPageState
     extends State<SeguimientoPorProfesorPage> {
   List<User> profesores = [];
+  bool isLoading=true;
 
   @override
   void initState() {
@@ -25,13 +26,13 @@ class _SeguimientoPorProfesorPageState
   }
 
   Future<void> _loadProfesores() async {
-    // Load professors who have had tutoring sessions with the student
     final db = FirebaseServices.instance;
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userid');
     final profesorList = await db.getProfesoresPorAlumno(userId!);
     setState(() {
       profesores = profesorList;
+      isLoading=false;
     });
   }
 
@@ -39,36 +40,45 @@ class _SeguimientoPorProfesorPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Seguimiento por Profesor')),
-      body: ListView.builder(
-        itemCount: profesores.length,
-        itemBuilder: (context, index) {
-          final profesor = profesores[index];
-          return Card(
-            child: Row(
-              children: [
-                CircleAvatar(
-                    radius: 10,
-                    backgroundImage: profesor.fotoperfil != null &&
-                            profesor.fotoperfil!.isNotEmpty
-                        ? MemoryImage(base64Decode(profesor.fotoperfil!))
-                        : const AssetImage("assets/images/user.png")),
-                ListTile(
-                  title: Text(profesor.nombre),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DetalleSeguimientoPage(profesor: profesor),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : profesores.isNotEmpty
+          ? ListView.builder(
+              itemCount: profesores.length,
+              itemBuilder: (context, index) {
+                final profesor = profesores[index];
+                return Card(
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                          radius: 10,
+                          backgroundImage: profesor.fotoperfil != null &&
+                                  profesor.fotoperfil!.isNotEmpty
+                              ? MemoryImage(base64Decode(profesor.fotoperfil!))
+                              : const AssetImage("assets/images/user.png")),
+                      ListTile(
+                        title: Text(profesor.nombre),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DetalleSeguimientoPage(profesor: profesor),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                    ],
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Text(
+              "No tienes seguimiento con profesores",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.amber[800], fontSize: 20),
+            )),
     );
   }
 }

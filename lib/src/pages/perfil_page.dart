@@ -130,7 +130,7 @@ class _PerfilPageState extends State<PerfilPage> {
           children: [
             Center(
                 child: CircleAvatar(
-              radius: responsive.wp(50),
+              radius: responsive.wp(20),
               foregroundColor: Colors.amber[800],
               backgroundImage: foto != null && foto!.isNotEmpty
                   ? MemoryImage(base64Decode(foto!))

@@ -51,6 +51,7 @@ class FirebaseServices {
     final DocumentSnapshot doc = await materias.doc(id).get();
     mat =
         doc.exists ? Materia.fromMap(doc.data() as Map<String, dynamic>) : null;
+    print(mat!=null?mat.nombre:'No encuentra la materia');
     return mat;
   }
 

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:mentorme/src/models/materia.dart';
 import 'package:mentorme/src/models/tutoria.dart';
@@ -28,6 +27,7 @@ class _ConfirmarTutoriaPageState extends State<ConfirmarTutoriaPage> {
     setState(() {
       isLoading = false;
     });
+    Navigator.pop(context, 'confirmada');
   }
 
   Future<void> _rechazar(Tutoria tutoria) async {
@@ -38,6 +38,7 @@ class _ConfirmarTutoriaPageState extends State<ConfirmarTutoriaPage> {
     setState(() {
       isLoading = false;
     });
+    Navigator.pop(context, 'rechazada');
   }
 
   Future<User?> getAlumno() async {
@@ -52,108 +53,205 @@ class _ConfirmarTutoriaPageState extends State<ConfirmarTutoriaPage> {
   @override
   Widget build(BuildContext context) {
     final Responsive responsive = Responsive.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalles de la Tutoría'),
+        centerTitle: true,
       ),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator()) // Indicador de carga
-          : Padding(
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  FutureBuilder(
-                      future: getAlumno(),
-                      builder: (context, snapshot) {
-                        final user = snapshot.data;
-                        final url = user?.fotoperfil != null &&
-                                user!.fotoperfil!.isNotEmpty
-                            ? user.fotoperfil
-                            : null;
-                        return Card(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                backgroundImage: url != null
-                                    ? MemoryImage(base64Decode(url))
-                                    : const AssetImage(
-                                        'assets/images/user.png'),
-                                radius: Responsive.of(context).wp(50),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.wp(5),
+                    vertical: responsive.hp(3),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      FutureBuilder<User?>(
+                        future: getAlumno(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return const Text('Error al cargar el alumno');
+                          } else if (!snapshot.hasData ||
+                              snapshot.data == null) {
+                            return const Text('Alumno no encontrado');
+                          } else {
+                            final user = snapshot.data!;
+                            final url = user.fotoperfil != null &&
+                                    user.fotoperfil!.isNotEmpty
+                                ? user.fotoperfil
+                                : null;
+
+                            return Card(
+                              elevation: 5,
+                              margin: const EdgeInsets.only(bottom: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
                               ),
-                              SizedBox(height: responsive.hp(3)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundImage: url != null
+                                          ? MemoryImage(base64Decode(url))
+                                          : const AssetImage(
+                                                  'assets/images/user.png')
+                                              as ImageProvider,
+                                      radius: responsive.wp(15),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      user.nombre,
+                                      style: TextStyle(
+                                        fontSize: responsive.dp(2.5),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (user.descripcion != null)
+                                      Text(
+                                        user.descripcion!,
+                                        style: TextStyle(
+                                          fontSize: responsive.dp(2),
+                                          color: Colors.grey[700],
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      FutureBuilder<Materia?>(
+                        future: getMateria(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (snapshot.hasError) {
+                            return const Text('Error al cargar la materia');
+                          } else if (!snapshot.hasData ||
+                              snapshot.data == null) {
+                            return const Text('Materia no encontrada');
+                          } else {
+                            final materia = snapshot.data!;
+                            return Card(
+                              elevation: 3,
+                              margin: const EdgeInsets.only(bottom: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ListTile(
+                                title: Text(
+                                  materia.nombre,
+                                  style: TextStyle(
+                                    fontSize: responsive.dp(2.5),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                leading: const Icon(
+                                  Icons.book,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      Card(
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Container(
+                          width: double.infinity, // Ocupa todo el ancho posible
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                user != null
-                                    ? 'Alumno: ${user.nombre}'
-                                    : 'Alumno no encontrado',
+                                'Fecha:',
                                 style: TextStyle(
-                                  fontSize: responsive.dp(3),
+                                  fontSize: responsive.dp(2),
                                   fontWeight: FontWeight.bold,
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: responsive.hp(2)),
-                              Text(user != null ? user.descripcion! : '',
-                                  style: TextStyle(
-                                    fontSize: responsive.dp(2),
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                  textAlign: TextAlign.center),
+                              const SizedBox(height: 5),
+                              Text(
+                                widget.tutoria.dia.toLocal().toString(),
+                                style: TextStyle(
+                                  fontSize: responsive.dp(2),
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Descripción:',
+                                style: TextStyle(
+                                  fontSize: responsive.dp(2),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                widget.tutoria.descripcion,
+                                style: TextStyle(
+                                  fontSize: responsive.dp(2),
+                                  color: Colors.grey[700],
+                                ),
+                              ),
                             ],
                           ),
-                        );
-                      }),
-                  const SizedBox(height: 10),
-                  FutureBuilder(
-                      future: getMateria(),
-                      builder: (context, snapshot) {
-                        final materia = snapshot.data;
-                        return Text(
-                          'Materia: ${materia!.nombre}',
-                          style: TextStyle(
-                            fontSize: responsive.dp(3),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                      }),
-                  Text(
-                    'Fecha: ${widget.tutoria.dia.toLocal()}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Descripción: ${widget.tutoria.descripcion}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _confirmar(widget.tutoria);
-                          Navigator.pop(context, 'confirmada');
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green),
-                        child: const Text('Confirmar'),
+                        ),
                       ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await _rechazar(widget.tutoria);
-                          Navigator.pop(context, 'rechazada');
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red),
-                        child: const Text('Rechazar'),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () async =>
+                                await _confirmar(widget.tutoria),
+                            icon: const Icon(Icons.check),
+                            label: const Text('Confirmar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () async =>
+                                await _rechazar(widget.tutoria),
+                            icon: const Icon(Icons.close),
+                            label: const Text('Rechazar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
     );

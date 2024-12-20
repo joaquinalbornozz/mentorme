@@ -88,7 +88,7 @@ class _ConfirmarPageState extends State<ConfirmarPage> {
                                     ),
                                     trailing: const Icon(Icons.arrow_forward),
                                     onTap: () async {
-                                      final String resultado =
+                                      final String? resultado =
                                           await Navigator.push(
                                         context,
                                         MaterialPageRoute(
